@@ -17,14 +17,23 @@ repositories {
 }
 
 dependencies {
+    // Use nextflow's plugin framework
+    implementation 'io.nextflow:nextflow:23.05.0-edge'
+
+	implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.2'
+
+//    implementation 'org.carlspring.cloud.aws:s3fs-nio:1.0.1'
+
+    implementation 'software.amazon.awssdk:s3:2.20.102'
+
     // Use JUnit test framework.
     testImplementation 'junit:junit:4.13.2'
 
     // This dependency is exported to consumers, that is to say found on their compile classpath.
-    api 'org.apache.commons:commons-math3:3.6.1'
+//    api 'org.apache.commons:commons-math3:3.6.1'
 
     // This dependency is used internally, and not exposed to consumers on their own compile classpath.
-    implementation 'com.google.guava:guava:31.1-jre'
+//    implementation 'com.google.guava:guava:31.1-jre'
 }
 
 // Apply a specific Java toolchain to ease working on different environments.
@@ -32,4 +41,8 @@ java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(17)
     }
+}
+
+test {
+  jvmArgs += ["--add-opens", "java.base/java.nio.file.spi=ALL-UNNAMED"]
 }
