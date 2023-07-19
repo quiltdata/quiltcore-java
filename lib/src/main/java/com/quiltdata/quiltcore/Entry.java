@@ -7,7 +7,6 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Map;
 
 import software.amazon.awssdk.core.ResponseBytes;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -32,17 +31,29 @@ public class Entry {
         }
     }
 
-    private String physicalKey;
+    private URI physicalKey;
     private long size;
     private Hash hash;
 
-    public Entry(String physicalKey, long size, Hash hash) {
+    public Entry(URI physicalKey, long size, Hash hash) {
+        if (physicalKey.getScheme().equals("file")) {
+            if (physicalKey.getHost() != null) {
+                throw new IllegalArgumentException("Bad file URL: " + physicalKey);
+            }
+        } else if (physicalKey.getScheme().equals("s3")) {
+            if (physicalKey.getHost() == null) {
+                throw new IllegalArgumentException("Bad s3 URL: " + physicalKey);
+            }
+        } else {
+            throw new IllegalArgumentException("Unsupported URL scheme: " + physicalKey);
+        }
+
         this.physicalKey = physicalKey;
         this.size = size;
         this.hash = hash;
     }
 
-    public String getPhysicalKey() {
+    public URI getPhysicalKey() {
         return physicalKey;
     }
 
@@ -57,17 +68,16 @@ public class Entry {
     public byte[] getBytes() throws URISyntaxException, IOException {
         // TODO: Verify the hash.
 
-        URI uri = new URI(physicalKey);
-        if (uri.getScheme().equals("s3")) {
+        if (physicalKey.getScheme().equals("s3")) {
             // Quilt S3 URIs are not the same as AWS or s3fs S3 URIs:
             // 1) The path is URL-encoded
             // 2) There is a versionId query parameter
 
-            String bucket = uri.getHost();
-            String key = uri.getPath().substring(1);  // Remove /
+            String bucket = physicalKey.getHost();
+            String key = physicalKey.getPath().substring(1);  // Remove /
             String versionId = null;
 
-            for (String nameValuePair : uri.getQuery().split("&")) {
+            for (String nameValuePair : physicalKey.getQuery().split("&")) {
                 String[] parts = nameValuePair.split("=");
                 if (parts.length == 2) {
                     String name = URLDecoder.decode(parts[0], StandardCharsets.UTF_8);
@@ -92,13 +102,13 @@ public class Entry {
                 return objectBytes.asByteArray();
             } catch (S3Exception e) {
                 // Convert into IOException for consistency with file://
-                throw new IOException("Could not read uri: " + uri, e);
+                throw new IOException("Could not read uri: " + physicalKey, e);
             }
-        } else if (uri.getScheme().equals("file")) {
-            Path path = Path.of(uri);
+        } else if (physicalKey.getScheme().equals("file")) {
+            Path path = Path.of(physicalKey);
             return Files.readAllBytes(path);
         } else {
-            throw new IOException("Unsupported URI: " + uri);
+            throw new IOException("Unsupported URI: " + physicalKey);
         }
     }
 }

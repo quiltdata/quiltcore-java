@@ -3,13 +3,20 @@ package com.quiltdata.quiltcore;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.junit.Assert.*;
+
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 
 public class RegistryTest {
+    @Rule
+    public TemporaryFolder installFolder = new TemporaryFolder();
+
     @Test
     public void testS3() {
         try {
@@ -17,14 +24,22 @@ public class RegistryTest {
 
             Registry r = new Registry(p);
             Namespace n = r.getNamespace("examples/metadata");
-            Manifest m = n.getManifest("latest");
+            String hash = n.getHash("latest");
+            Manifest m = n.getManifest(hash);
 
             Entry e = m.getEntry("README.md");
 
             byte[] data = e.getBytes();
             String readme = new String(data);
 
-            System.out.println(readme);
+            assertTrue(readme.startsWith("# Working with metadata in Quilt packages"));
+
+            Path dest = installFolder.newFolder().toPath();
+            m.install(dest);
+
+            assertTrue(Files.exists(dest.resolve("README.md")));
+            assertTrue(Files.exists(dest.resolve("quilt_summarize.json")));
+            assertTrue(Files.exists(dest.resolve("cluster0v2.csv")));
         } catch (IOException e) {
             e.printStackTrace();
             fail();
