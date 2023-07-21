@@ -9,6 +9,7 @@
 plugins {
     // Apply the java-library plugin for API and implementation separation.
     id 'java-library'
+    id 'java-library-distribution'
 }
 
 repositories {
@@ -35,5 +36,11 @@ dependencies {
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+distributions {
+    main {
+        distributionBaseName = 'quiltcore'
     }
 }
