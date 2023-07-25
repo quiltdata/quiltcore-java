@@ -1,12 +1,12 @@
 package com.quiltdata.quiltcore;
 
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+
+import com.quiltdata.quiltcore.key.LocalPhysicalKey;
+import com.quiltdata.quiltcore.key.PhysicalKey;
+import com.quiltdata.quiltcore.key.S3PhysicalKey;
 
 import software.amazon.awssdk.core.ResponseBytes;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -31,29 +31,17 @@ public class Entry {
         }
     }
 
-    private URI physicalKey;
+    private PhysicalKey physicalKey;
     private long size;
     private Hash hash;
 
-    public Entry(URI physicalKey, long size, Hash hash) {
-        if (physicalKey.getScheme().equals("file")) {
-            if (physicalKey.getHost() != null) {
-                throw new IllegalArgumentException("Bad file URL: " + physicalKey);
-            }
-        } else if (physicalKey.getScheme().equals("s3")) {
-            if (physicalKey.getHost() == null) {
-                throw new IllegalArgumentException("Bad s3 URL: " + physicalKey);
-            }
-        } else {
-            throw new IllegalArgumentException("Unsupported URL scheme: " + physicalKey);
-        }
-
+    public Entry(PhysicalKey physicalKey, long size, Hash hash) {
         this.physicalKey = physicalKey;
         this.size = size;
         this.hash = hash;
     }
 
-    public URI getPhysicalKey() {
+    public PhysicalKey getPhysicalKey() {
         return physicalKey;
     }
 
@@ -65,28 +53,18 @@ public class Entry {
         return hash;
     }
 
-    public byte[] getBytes() throws URISyntaxException, IOException {
+    public byte[] getBytes() throws IOException {
         // TODO: Verify the hash.
 
-        if (physicalKey.getScheme().equals("s3")) {
-            // Quilt S3 URIs are not the same as AWS or s3fs S3 URIs:
-            // 1) The path is URL-encoded
-            // 2) There is a versionId query parameter
-
-            String bucket = physicalKey.getHost();
-            String key = physicalKey.getPath().substring(1);  // Remove /
-            String versionId = null;
-
-            for (String nameValuePair : physicalKey.getQuery().split("&")) {
-                String[] parts = nameValuePair.split("=");
-                if (parts.length == 2) {
-                    String name = URLDecoder.decode(parts[0], StandardCharsets.UTF_8);
-                    String value = URLDecoder.decode(parts[1], StandardCharsets.UTF_8);
-                    if (name.equals("versionId")) {
-                        versionId = value;
-                    }
-                }
-            }
+        if (physicalKey instanceof LocalPhysicalKey) {
+            LocalPhysicalKey localKey = (LocalPhysicalKey)physicalKey;
+            Path p = Path.of(localKey.getPath());
+            return Files.readAllBytes(p);
+        } else if (physicalKey instanceof S3PhysicalKey) {
+            S3PhysicalKey s3Key = (S3PhysicalKey)physicalKey;
+            String bucket = s3Key.getBucket();
+            String key = s3Key.getKey();
+            String versionId = s3Key.getVersionId();
 
             S3Client s3 = S3ClientStore.getInstance().getClientForBucketName(bucket);
 
@@ -104,11 +82,8 @@ public class Entry {
                 // Convert into IOException for consistency with file://
                 throw new IOException("Could not read uri: " + physicalKey, e);
             }
-        } else if (physicalKey.getScheme().equals("file")) {
-            Path path = Path.of(physicalKey);
-            return Files.readAllBytes(path);
         } else {
-            throw new IOException("Unsupported URI: " + physicalKey);
+            throw new IOException("Unsupported key: " + physicalKey);
         }
     }
 }

@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -16,6 +17,9 @@ import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.quiltdata.quiltcore.key.LocalPhysicalKey;
+import com.quiltdata.quiltcore.key.PhysicalKey;
+import com.quiltdata.quiltcore.key.S3PhysicalKey;
 
 import software.amazon.awssdk.services.s3.S3AsyncClient;
 import software.amazon.awssdk.transfer.s3.S3TransferManager;
@@ -48,7 +52,7 @@ public class Manifest {
                 JsonNode row = mapper.readTree(line);
 
                 String logicalKey = row.get("logical_key").asText();
-                URI physicalKey = new URI(row.get("physical_keys").get(0).asText());
+                PhysicalKey physicalKey = parsePhysicalKey(row.get("physical_keys").get(0).asText());
                 long size = row.get("size").asLong();
                 JsonNode hashNode = row.get("hash");
                 Entry.HashType hashType = Entry.HashType.valueOf(hashNode.get("type").asText());
@@ -58,6 +62,33 @@ public class Manifest {
                 Entry entry = new Entry(physicalKey, size, new Entry.Hash(hashType, hashValue));
                 entries.put(logicalKey, entry);
             }
+        }
+    }
+
+    private static PhysicalKey parsePhysicalKey(String s) throws URISyntaxException {
+        URI uri = new URI(s);
+
+        if (uri.getScheme().equals("file")) {
+            return new LocalPhysicalKey(uri.getPath());
+        } else if (uri.getScheme().equals("s3")) {
+            String bucket = uri.getHost();
+            String key = uri.getPath().substring(1);  // Remove /
+            String versionId = null;
+
+            for (String nameValuePair : uri.getQuery().split("&", 1)) {
+                String[] parts = nameValuePair.split("=", 1);
+                if (parts.length == 2) {
+                    String name = URLDecoder.decode(parts[0], StandardCharsets.UTF_8);
+                    String value = URLDecoder.decode(parts[1], StandardCharsets.UTF_8);
+                    if (name.equals("versionId")) {
+                        versionId = value;
+                    }
+                }
+            }
+
+            return new S3PhysicalKey(bucket, key, versionId);
+        } else {
+            throw new IllegalArgumentException("Bad physical key: " + s);
         }
     }
 
@@ -79,7 +110,9 @@ public class Manifest {
 
         Map<String, List<Map.Entry<String, Entry>>> entriesByBucket =
             entries.entrySet().stream().collect(Collectors.groupingBy(
-                entry -> entry.getValue().getPhysicalKey().getHost()
+                entry -> entry.getValue().getPhysicalKey() instanceof S3PhysicalKey
+                    ? ((S3PhysicalKey)entry.getValue().getPhysicalKey()).getBucket()
+                    : ""
             ));
 
         // Ideally, we would parallelize all downloads, but S3TransferManager is per-region and
@@ -89,7 +122,7 @@ public class Manifest {
             String bucket = e.getKey();
             List<Map.Entry<String, Entry>> entries = e.getValue();
 
-            if (bucket == null) {
+            if (bucket.length() == 0) {
                 // Local files
                 throw new IOException("Expected s3 paths, but got local paths");
             } else {
@@ -107,7 +140,7 @@ public class Manifest {
                     for (Map.Entry<String, Entry> e2 : entries) {
                         String logicalKey = e2.getKey();
                         Entry entry = e2.getValue();
-                        String key = entry.getPhysicalKey().getPath().substring(1);
+                        String key = ((S3PhysicalKey)entry.getPhysicalKey()).getKey();
 
                         Path entryDest = resolveDest(dest, logicalKey);
 
