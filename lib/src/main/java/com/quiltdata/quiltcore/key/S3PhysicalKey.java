@@ -15,6 +15,7 @@ import software.amazon.awssdk.core.async.AsyncResponseTransformer;
 import software.amazon.awssdk.services.s3.S3AsyncClient;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
+import software.amazon.awssdk.services.s3.model.NoSuchBucketException;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 
 public class S3PhysicalKey extends PhysicalKey {
@@ -72,7 +73,14 @@ public class S3PhysicalKey extends PhysicalKey {
 
     @Override
     public byte[] getBytes() throws IOException {
-        S3AsyncClient s3 = S3ClientStore.getClient(bucket);
+        S3AsyncClient s3;
+        try {
+            s3 = S3ClientStore.getClient(bucket);
+        } catch (NoSuchBucketException e) {
+            throw new IOException("Bucket " + bucket + " does not exist", e);
+        } catch (S3Exception e) {
+            throw new IOException("Could not look up bucket " + bucket, e);
+        }
 
         GetObjectRequest objectRequest = GetObjectRequest
             .builder()
