@@ -27,7 +27,6 @@ import software.amazon.awssdk.transfer.s3.model.CompletedFileDownload;
 import software.amazon.awssdk.transfer.s3.model.DownloadFileRequest;
 import software.amazon.awssdk.transfer.s3.model.FileDownload;
 import software.amazon.awssdk.transfer.s3.progress.LoggingTransferListener;
-import software.amazon.nio.spi.s3.S3ClientStore;
 
 
 public class Manifest {
@@ -115,9 +114,9 @@ public class Manifest {
                     : ""
             ));
 
-        // Ideally, we would parallelize all downloads, but S3TransferManager is per-region and
-        // S3ClientStore is per-bucket. But, a single-bucket manifest is the common case,
-        // so group all paths by buckets, then parallelize everything within the bucket.
+        // Ideally, we would parallelize all downloads, but S3TransferManager is per-region.
+        // But, a single-bucket manifest is the common case, so group all paths by buckets,
+        // then parallelize everything within the bucket.
         for (Map.Entry<String, List<Map.Entry<String, Entry>>> e : entriesByBucket.entrySet()) {
             String bucket = e.getKey();
             List<Map.Entry<String, Entry>> entries = e.getValue();
@@ -126,8 +125,7 @@ public class Manifest {
                 // Local files
                 throw new IOException("Expected s3 paths, but got local paths");
             } else {
-                // S3 files
-                S3AsyncClient s3 = S3ClientStore.getInstance().getAsyncClientForBucketName(bucket);
+                S3AsyncClient s3 = S3ClientStore.getClient(bucket);
 
                 try(
                     S3TransferManager transferManager =

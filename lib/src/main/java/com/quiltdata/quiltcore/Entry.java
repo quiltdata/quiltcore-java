@@ -3,17 +3,18 @@ package com.quiltdata.quiltcore;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.concurrent.ExecutionException;
 
 import com.quiltdata.quiltcore.key.LocalPhysicalKey;
 import com.quiltdata.quiltcore.key.PhysicalKey;
 import com.quiltdata.quiltcore.key.S3PhysicalKey;
 
 import software.amazon.awssdk.core.ResponseBytes;
-import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.core.async.AsyncResponseTransformer;
+import software.amazon.awssdk.services.s3.S3AsyncClient;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.S3Exception;
-import software.amazon.nio.spi.s3.S3ClientStore;
 
 
 public class Entry {
@@ -66,7 +67,7 @@ public class Entry {
             String key = s3Key.getKey();
             String versionId = s3Key.getVersionId();
 
-            S3Client s3 = S3ClientStore.getInstance().getClientForBucketName(bucket);
+            S3AsyncClient s3 = S3ClientStore.getClient(bucket);
 
             GetObjectRequest objectRequest = GetObjectRequest
                 .builder()
@@ -76,10 +77,15 @@ public class Entry {
                 .build();
 
             try {
-                ResponseBytes<GetObjectResponse> objectBytes = s3.getObjectAsBytes(objectRequest);
+                ResponseBytes<GetObjectResponse> objectBytes =
+                    s3.getObject(objectRequest, AsyncResponseTransformer.toBytes()).get();
                 return objectBytes.asByteArray();
             } catch (S3Exception e) {
                 // Convert into IOException for consistency with file://
+                throw new IOException("Could not read uri: " + physicalKey, e);
+            } catch (InterruptedException e) {
+                throw new IOException("Could not read uri: " + physicalKey, e);
+            } catch (ExecutionException e) {
                 throw new IOException("Could not read uri: " + physicalKey, e);
             }
         } else {
