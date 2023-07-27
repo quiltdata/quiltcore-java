@@ -3,6 +3,7 @@ package com.quiltdata.quiltcore.key;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.util.stream.Stream;
 
 public abstract class PhysicalKey {
     public abstract InputStream getInputStream() throws IOException;
@@ -16,6 +17,9 @@ public abstract class PhysicalKey {
     public abstract PhysicalKey resolve(String child);
 
     public abstract URI toUri();
+
+    // TODO: Include file sizes?
+    public abstract Stream<String> listRecursively() throws IOException;
 
     public static PhysicalKey fromUri(URI uri) {
         String scheme = uri.getScheme();

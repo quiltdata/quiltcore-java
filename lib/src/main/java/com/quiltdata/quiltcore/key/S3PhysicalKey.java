@@ -7,13 +7,16 @@ import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.stream.Stream;
 
 import com.quiltdata.quiltcore.S3ClientStore;
 
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.NoSuchBucketException;
 import software.amazon.awssdk.services.s3.model.S3Exception;
+import software.amazon.awssdk.services.s3.paginators.ListObjectsV2Iterable;
 
 public class S3PhysicalKey extends PhysicalKey {
     private String bucket;
@@ -68,16 +71,23 @@ public class S3PhysicalKey extends PhysicalKey {
         return versionId;
     }
 
-    @Override
-    public InputStream getInputStream() throws IOException {
-        S3Client s3;
+    private S3Client getClient() throws IOException {
         try {
-            s3 = S3ClientStore.getClient(bucket);
+            return S3ClientStore.getClient(bucket);
         } catch (NoSuchBucketException e) {
             throw new IOException("Bucket " + bucket + " does not exist", e);
         } catch (S3Exception e) {
             throw new IOException("Could not look up bucket " + bucket, e);
         }
+    }
+
+    private boolean looksLikeDir() {
+        return key.length() == 0 || key.charAt(key.length() - 1) == '/';
+    }
+
+    @Override
+    public InputStream getInputStream() throws IOException {
+        S3Client s3 = getClient();
 
         GetObjectRequest objectRequest = GetObjectRequest
             .builder()
@@ -109,5 +119,24 @@ public class S3PhysicalKey extends PhysicalKey {
         } catch (URISyntaxException e) {
             throw new RuntimeException("Should not happen!", e);
         }
+    }
+
+    @Override
+    public Stream<String> listRecursively() throws IOException {
+        S3Client s3 = getClient();
+
+        String prefix = looksLikeDir() ? key : key + "/";
+
+        ListObjectsV2Request listRequest = ListObjectsV2Request
+            .builder()
+            .bucket(bucket)
+            .prefix(prefix)
+            .build();
+
+        ListObjectsV2Iterable listResp = s3.listObjectsV2Paginator(listRequest);
+        return listResp
+            .stream()
+            .flatMap(r -> r.contents().stream())
+            .map(obj -> obj.key().substring(prefix.length()));
     }
 }

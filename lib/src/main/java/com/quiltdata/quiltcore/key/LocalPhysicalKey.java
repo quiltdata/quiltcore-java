@@ -6,8 +6,11 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.stream.Stream;
 
 public class LocalPhysicalKey extends PhysicalKey {
+    private static int MAX_DEPTH = 1000;
+
     private String path;
 
     public LocalPhysicalKey(String path) {
@@ -58,5 +61,16 @@ public class LocalPhysicalKey extends PhysicalKey {
         } catch (URISyntaxException e) {
             throw new RuntimeException("Should not happen!", e);
         }
+    }
+
+    @Override
+    public Stream<String> listRecursively() throws IOException {
+        Path pathObj = Path.of(path);
+
+        return Files.find(
+            pathObj,
+            MAX_DEPTH,
+            (child, attrs) -> attrs.isRegularFile()
+        ).map(child -> pathObj.relativize(child).toString());
     }
 }
