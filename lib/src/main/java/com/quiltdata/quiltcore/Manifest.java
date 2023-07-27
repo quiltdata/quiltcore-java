@@ -1,7 +1,6 @@
 package com.quiltdata.quiltcore;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URI;
@@ -34,12 +33,9 @@ public class Manifest {
     public Manifest(PhysicalKey path) throws IOException, URISyntaxException {
         entries = new HashMap<>();
 
-        // TODO: Support streaming
-        byte[] contents = path.getBytes();
-
         ObjectMapper mapper = new ObjectMapper();
 
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(contents)))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(path.getInputStream()))) {
             String header = reader.readLine();
             JsonNode node = mapper.readTree(header);
             String version = node.get("version").asText();

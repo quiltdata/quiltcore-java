@@ -1,6 +1,7 @@
 package com.quiltdata.quiltcore.key;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
@@ -68,7 +69,7 @@ public class S3PhysicalKey extends PhysicalKey {
     }
 
     @Override
-    public byte[] getBytes() throws IOException {
+    public InputStream getInputStream() throws IOException {
         S3Client s3;
         try {
             s3 = S3ClientStore.getClient(bucket);
@@ -86,7 +87,7 @@ public class S3PhysicalKey extends PhysicalKey {
             .build();
 
         try {
-            return s3.getObject(objectRequest).readAllBytes();
+            return s3.getObject(objectRequest);
         } catch (S3Exception e) {
             throw new IOException("Could not read uri: " + toUri(), e);
         }

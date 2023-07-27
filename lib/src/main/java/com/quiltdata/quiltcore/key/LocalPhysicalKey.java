@@ -1,6 +1,7 @@
 package com.quiltdata.quiltcore.key;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -39,9 +40,9 @@ public class LocalPhysicalKey extends PhysicalKey {
     }
 
     @Override
-    public byte[] getBytes() throws IOException {
+    public InputStream getInputStream() throws IOException {
         Path p = Path.of(path);
-        return Files.readAllBytes(p);
+        return Files.newInputStream(p);
     }
 
     @Override

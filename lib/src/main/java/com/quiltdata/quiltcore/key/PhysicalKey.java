@@ -1,10 +1,17 @@
 package com.quiltdata.quiltcore.key;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 
 public abstract class PhysicalKey {
-    public abstract byte[] getBytes() throws IOException;
+    public abstract InputStream getInputStream() throws IOException;
+
+    public byte[] getBytes() throws IOException {
+        try (InputStream in = getInputStream()) {
+            return in.readAllBytes();
+        }
+    }
 
     public abstract PhysicalKey resolve(String child);
 
