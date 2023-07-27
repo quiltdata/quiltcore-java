@@ -74,8 +74,8 @@ public class Manifest {
             String key = uri.getPath().substring(1);  // Remove /
             String versionId = null;
 
-            for (String nameValuePair : uri.getQuery().split("&", 1)) {
-                String[] parts = nameValuePair.split("=", 1);
+            for (String nameValuePair : uri.getRawQuery().split("&")) {
+                String[] parts = nameValuePair.split("=", 2);
                 if (parts.length == 2) {
                     String name = URLDecoder.decode(parts[0], StandardCharsets.UTF_8);
                     String value = URLDecoder.decode(parts[1], StandardCharsets.UTF_8);
