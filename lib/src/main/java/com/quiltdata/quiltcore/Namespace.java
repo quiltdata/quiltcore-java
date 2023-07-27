@@ -20,7 +20,29 @@ public class Namespace {
         return new String(path.resolve(tag).getBytes(), StandardCharsets.UTF_8);
     }
 
+    public String resolveHash(String hashPrefix) throws IOException {
+        int len = hashPrefix.length();
+        if (len == 64) {
+            return hashPrefix;
+        } else if (len >= 6 && len < 64) {
+            String[] matching = versions
+                .listRecursively()
+                .filter(hash -> hash.startsWith(hashPrefix))
+                .toArray(String[]::new);
+            if (matching.length == 0) {
+                throw new IOException("Found zero matches for " + hashPrefix);
+            } else if (matching.length > 1) {
+                throw new IOException("Found multiple matches for " + hashPrefix);
+            } else {
+                return matching[0];
+            }
+        } else {
+            throw new IllegalArgumentException("Invalid hash prefix: " + hashPrefix);
+        }
+    }
+
     public Manifest getManifest(String hash) throws IOException, URISyntaxException {
-        return new Manifest(versions.resolve(hash));
+        String resolvedHash = resolveHash(hash);
+        return new Manifest(versions.resolve(resolvedHash));
     }
 }

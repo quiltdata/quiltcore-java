@@ -50,4 +50,25 @@ public class RegistryTest {
             fail();
         }
     }
+
+    @Test
+    public void testResolveHash() {
+        try {
+            PhysicalKey p = PhysicalKey.fromUri(new URI("s3://quilt-example/"));
+
+            Registry r = new Registry(p);
+            Namespace n = r.getNamespace("examples/metadata");
+            String latest = n.getHash("latest");
+
+            assertEquals(latest, n.resolveHash("fd2044"));
+            assertThrows(IOException.class, () -> n.resolveHash("ffffff"));
+            assertThrows(IllegalArgumentException.class, () -> n.resolveHash("abc"));
+        } catch (IOException e) {
+            e.printStackTrace();
+            fail();
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+            fail();
+        }
+    }
 }
