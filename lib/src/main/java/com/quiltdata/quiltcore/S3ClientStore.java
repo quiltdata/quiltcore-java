@@ -13,15 +13,27 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 
 public class S3ClientStore {
-    private static final S3Client LOCATION_CLIENT = S3Client.builder().region(Region.US_EAST_1).build();
+    private static final S3Client LOCATION_CLIENT = createClient(Region.US_EAST_1);
 
-    private static Map<String, S3AsyncClient> clientMap = Collections.synchronizedMap(new HashMap<>());
+    private static Map<String, Region> regionMap = Collections.synchronizedMap(new HashMap<>());
+    private static Map<Region, S3AsyncClient> asyncClientMap = Collections.synchronizedMap(new HashMap<>());
+    private static Map<Region, S3Client> clientMap = Collections.synchronizedMap(new HashMap<>());
 
-    public static S3AsyncClient getClient(String bucket) {
-        return clientMap.computeIfAbsent(bucket, S3ClientStore::createClient);
+    public static S3AsyncClient getAsyncClient(String bucket) {
+        Region region = getBucketRegion(bucket);
+        return asyncClientMap.computeIfAbsent(region, S3ClientStore::createAsyncClient);
+    }
+
+    public static S3Client getClient(String bucket) {
+        Region region = getBucketRegion(bucket);
+        return clientMap.computeIfAbsent(region, S3ClientStore::createClient);
     }
 
     public static Region getBucketRegion(String bucket) {
+        return regionMap.computeIfAbsent(bucket, S3ClientStore::findBucketRegion);
+    }
+
+    private static Region findBucketRegion(String bucket) {
         SdkHttpResponse response;
         try {
             response = LOCATION_CLIENT.headBucket(builder -> builder.bucket(bucket)).sdkHttpResponse();
@@ -39,8 +51,11 @@ public class S3ClientStore {
         return Region.of(regionStr);
     }
 
-    private static S3AsyncClient createClient(String bucket) {
-        Region region = getBucketRegion(bucket);
+    private static S3AsyncClient createAsyncClient(Region region) {
         return S3AsyncClient.crtBuilder().region(region).build();
+    }
+
+    private static S3Client createClient(Region region) {
+        return S3Client.builder().region(region).build();
     }
 }

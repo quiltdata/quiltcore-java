@@ -101,7 +101,7 @@ public class Manifest {
                 // Local files
                 throw new IOException("Expected s3 paths, but got local paths");
             } else {
-                S3AsyncClient s3 = S3ClientStore.getClient(bucket);
+                S3AsyncClient s3 = S3ClientStore.getAsyncClient(bucket);
 
                 try(
                     S3TransferManager transferManager =

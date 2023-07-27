@@ -6,15 +6,11 @@ import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.concurrent.ExecutionException;
 
 import com.quiltdata.quiltcore.S3ClientStore;
 
-import software.amazon.awssdk.core.ResponseBytes;
-import software.amazon.awssdk.core.async.AsyncResponseTransformer;
-import software.amazon.awssdk.services.s3.S3AsyncClient;
+import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
-import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.NoSuchBucketException;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 
@@ -73,7 +69,7 @@ public class S3PhysicalKey extends PhysicalKey {
 
     @Override
     public byte[] getBytes() throws IOException {
-        S3AsyncClient s3;
+        S3Client s3;
         try {
             s3 = S3ClientStore.getClient(bucket);
         } catch (NoSuchBucketException e) {
@@ -90,14 +86,8 @@ public class S3PhysicalKey extends PhysicalKey {
             .build();
 
         try {
-            ResponseBytes<GetObjectResponse> objectBytes =
-                s3.getObject(objectRequest, AsyncResponseTransformer.toBytes()).get();
-            return objectBytes.asByteArray();
+            return s3.getObject(objectRequest).readAllBytes();
         } catch (S3Exception e) {
-            throw new IOException("Could not read uri: " + toUri(), e);
-        } catch (InterruptedException e) {
-            throw new IOException("Could not read uri: " + toUri(), e);
-        } catch (ExecutionException e) {
             throw new IOException("Could not read uri: " + toUri(), e);
         }
     }
