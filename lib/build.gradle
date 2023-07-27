@@ -27,9 +27,6 @@ dependencies {
 
     // Use JUnit test framework.
     testImplementation 'junit:junit:4.13.2'
-
-    // AWS's java.nio.Path for S3.
-    testImplementation 'software.amazon.nio.s3:aws-java-nio-spi-for-s3:1.2.3'
 }
 
 // Apply a specific Java toolchain to ease working on different environments.

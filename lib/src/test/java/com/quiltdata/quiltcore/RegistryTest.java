@@ -12,6 +12,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import com.quiltdata.quiltcore.key.PhysicalKey;
+
 
 public class RegistryTest {
     @Rule
@@ -20,7 +22,7 @@ public class RegistryTest {
     @Test
     public void testS3() {
         try {
-            Path p = Path.of(new URI("s3://quilt-example/"));
+            PhysicalKey p = PhysicalKey.fromUri(new URI("s3://quilt-example/"));
 
             Registry r = new Registry(p);
             Namespace n = r.getNamespace("examples/metadata");

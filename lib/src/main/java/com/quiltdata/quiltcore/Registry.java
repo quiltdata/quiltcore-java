@@ -1,13 +1,12 @@
 package com.quiltdata.quiltcore;
 
-import java.nio.file.Path;
-
+import com.quiltdata.quiltcore.key.PhysicalKey;
 
 public class Registry {
-    private Path names;
-    private Path versions;
+    private PhysicalKey names;
+    private PhysicalKey versions;
 
-    public Registry(Path root) {
+    public Registry(PhysicalKey root) {
         names = root.resolve(".quilt/named_packages");
         versions = root.resolve(".quilt/packages");
     }

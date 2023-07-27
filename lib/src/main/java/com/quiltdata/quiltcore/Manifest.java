@@ -1,11 +1,11 @@
 package com.quiltdata.quiltcore;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -17,7 +17,6 @@ import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.quiltdata.quiltcore.key.LocalPhysicalKey;
 import com.quiltdata.quiltcore.key.PhysicalKey;
 import com.quiltdata.quiltcore.key.S3PhysicalKey;
 
@@ -32,12 +31,15 @@ import software.amazon.awssdk.transfer.s3.progress.LoggingTransferListener;
 public class Manifest {
     private Map<String, Entry> entries;
 
-    public Manifest(Path path) throws IOException, URISyntaxException {
+    public Manifest(PhysicalKey path) throws IOException, URISyntaxException {
         entries = new HashMap<>();
+
+        // TODO: Support streaming
+        byte[] contents = path.getBytes();
 
         ObjectMapper mapper = new ObjectMapper();
 
-        try (BufferedReader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(contents)))) {
             String header = reader.readLine();
             JsonNode node = mapper.readTree(header);
             String version = node.get("version").asText();
@@ -51,7 +53,8 @@ public class Manifest {
                 JsonNode row = mapper.readTree(line);
 
                 String logicalKey = row.get("logical_key").asText();
-                PhysicalKey physicalKey = parsePhysicalKey(row.get("physical_keys").get(0).asText());
+                String physicalKeyString = row.get("physical_keys").get(0).asText();
+                PhysicalKey physicalKey = PhysicalKey.fromUri(new URI(physicalKeyString));
                 long size = row.get("size").asLong();
                 JsonNode hashNode = row.get("hash");
                 Entry.HashType hashType = Entry.HashType.valueOf(hashNode.get("type").asText());
@@ -61,33 +64,6 @@ public class Manifest {
                 Entry entry = new Entry(physicalKey, size, new Entry.Hash(hashType, hashValue));
                 entries.put(logicalKey, entry);
             }
-        }
-    }
-
-    private static PhysicalKey parsePhysicalKey(String s) throws URISyntaxException {
-        URI uri = new URI(s);
-
-        if (uri.getScheme().equals("file")) {
-            return new LocalPhysicalKey(uri.getPath());
-        } else if (uri.getScheme().equals("s3")) {
-            String bucket = uri.getHost();
-            String key = uri.getPath().substring(1);  // Remove /
-            String versionId = null;
-
-            for (String nameValuePair : uri.getRawQuery().split("&")) {
-                String[] parts = nameValuePair.split("=", 2);
-                if (parts.length == 2) {
-                    String name = URLDecoder.decode(parts[0], StandardCharsets.UTF_8);
-                    String value = URLDecoder.decode(parts[1], StandardCharsets.UTF_8);
-                    if (name.equals("versionId")) {
-                        versionId = value;
-                    }
-                }
-            }
-
-            return new S3PhysicalKey(bucket, key, versionId);
-        } else {
-            throw new IllegalArgumentException("Bad physical key: " + s);
         }
     }
 
