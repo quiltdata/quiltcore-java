@@ -21,6 +21,7 @@ dependencies {
     // AWS SDK
     implementation 'software.amazon.awssdk:s3:2.20.102'
     implementation 'software.amazon.awssdk:s3-transfer-manager:2.20.102'
+    implementation 'software.amazon.awssdk.crt:aws-crt:0.23.2'
 
     // JSON parsing.
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.2'
