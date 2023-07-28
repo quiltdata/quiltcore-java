@@ -26,7 +26,7 @@ public class S3ClientStore {
         try {
             response = LOCATION_CLIENT.headBucket(builder -> builder.bucket(bucket)).sdkHttpResponse();
         } catch (S3Exception e) {
-            if (e.statusCode() == 301) {
+            if (e.statusCode() == 301 || e.statusCode() == 400) {
                 response = e.awsErrorDetails().sdkHttpResponse();
             } else {
                 throw e;
