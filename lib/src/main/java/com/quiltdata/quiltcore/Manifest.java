@@ -28,10 +28,34 @@ import software.amazon.awssdk.transfer.s3.progress.LoggingTransferListener;
 
 
 public class Manifest {
+    public static class Builder {
+        private Map<String, Entry> entries;
+
+        public Builder() {
+            entries = new HashMap<>();
+        }
+
+        public void addEntry(String key, Entry entry) {
+            entries.put(key, entry);
+        }
+
+        public Manifest build() {
+            return new Manifest(entries);
+        }
+    }
+
     private Map<String, Entry> entries;
 
-    public Manifest(PhysicalKey path) throws IOException, URISyntaxException {
-        entries = new HashMap<>();
+    private Manifest(Map<String, Entry> entries) {
+        this.entries = entries;
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static Manifest createFromFile(PhysicalKey path) throws IOException, URISyntaxException {
+        Builder builder = builder();
 
         ObjectMapper mapper = new ObjectMapper();
 
@@ -58,9 +82,11 @@ public class Manifest {
                 // TODO: entry metadata
 
                 Entry entry = new Entry(physicalKey, size, new Entry.Hash(hashType, hashValue));
-                entries.put(logicalKey, entry);
+                builder.addEntry(logicalKey, entry);
             }
         }
+
+        return builder.build();
     }
 
     public Entry getEntry(String logicalKey) {

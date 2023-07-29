@@ -43,6 +43,6 @@ public class Namespace {
 
     public Manifest getManifest(String hash) throws IOException, URISyntaxException {
         String resolvedHash = resolveHash(hash);
-        return new Manifest(versions.resolve(resolvedHash));
+        return Manifest.createFromFile(versions.resolve(resolvedHash));
     }
 }
