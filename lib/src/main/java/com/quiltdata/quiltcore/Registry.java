@@ -12,6 +12,6 @@ public class Registry {
     }
 
     public Namespace getNamespace(String name) {
-        return new Namespace(names.resolve(name), versions);
+        return new Namespace(name, names.resolve(name), versions);
     }
 }

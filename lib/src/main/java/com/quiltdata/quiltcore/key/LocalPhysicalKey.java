@@ -21,6 +21,14 @@ public class LocalPhysicalKey extends PhysicalKey {
         this.path = path;
     }
 
+    public LocalPhysicalKey(Path path) {
+        if (!path.isAbsolute()) {
+            throw new IllegalArgumentException("Relative paths are not allowed");
+        }
+
+        this.path = path.toString();
+    }
+
     public LocalPhysicalKey(URI uri) {
         if (!uri.getScheme().equals("file")) {
             throw new IllegalArgumentException("Unexpected URI scheme: " + uri.getScheme());
@@ -46,6 +54,12 @@ public class LocalPhysicalKey extends PhysicalKey {
     public InputStream getInputStream() throws IOException {
         Path p = Path.of(path);
         return Files.newInputStream(p);
+    }
+
+    @Override
+    public void putBytes(byte[] bytes) throws IOException {
+        Path p = Path.of(path);
+        Files.write(p, bytes);
     }
 
     @Override

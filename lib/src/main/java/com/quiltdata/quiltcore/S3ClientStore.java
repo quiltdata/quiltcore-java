@@ -52,7 +52,10 @@ public class S3ClientStore {
     }
 
     private static S3AsyncClient createAsyncClient(Region region) {
-        return S3AsyncClient.crtBuilder().region(region).build();
+        return S3AsyncClient.crtBuilder()
+            .region(region)
+            .minimumPartSizeInBytes(8L * 1024 * 1024)
+            .build();
     }
 
     private static S3Client createClient(Region region) {

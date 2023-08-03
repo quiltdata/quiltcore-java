@@ -8,12 +8,26 @@ import com.quiltdata.quiltcore.key.PhysicalKey;
 
 
 public class Namespace {
+    private String name;
     private PhysicalKey path;
     private PhysicalKey versions;
 
-    public Namespace(PhysicalKey path, PhysicalKey versions) {
+    public Namespace(String name, PhysicalKey path, PhysicalKey versions) {
+        this.name = name;
         this.path = path;
         this.versions = versions;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public PhysicalKey getPath() {
+        return path;
+    }
+
+    public PhysicalKey getVersions() {
+        return versions;
     }
 
     public String getHash(String tag) throws IOException {

@@ -14,6 +14,8 @@ public abstract class PhysicalKey {
         }
     }
 
+    public abstract void putBytes(byte[] bytes) throws IOException;
+
     public abstract PhysicalKey resolve(String child);
 
     public abstract URI toUri();

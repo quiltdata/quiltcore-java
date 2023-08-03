@@ -1,8 +1,13 @@
 package com.quiltdata.quiltcore;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 import com.quiltdata.quiltcore.key.PhysicalKey;
+
+import software.amazon.awssdk.utils.BinaryUtils;
 
 
 public class Entry {
@@ -46,5 +51,22 @@ public class Entry {
         // TODO: Verify the hash.
 
         return physicalKey.getBytes();
+    }
+
+    public Entry withHash() throws NoSuchAlgorithmException, IOException {
+        if (hash != null) {
+            return this;
+        }
+
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        try (InputStream in = physicalKey.getInputStream()) {
+            byte[] buffer = new byte[4096];
+            int count;
+            while ((count = in.read(buffer)) != -1) {
+                digest.update(buffer, 0, count);
+            }
+        }
+        String hash = BinaryUtils.toHex(digest.digest());
+        return new Entry(physicalKey, size, new Hash(HashType.SHA256, hash));
     }
 }

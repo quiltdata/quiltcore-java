@@ -5,6 +5,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.NoSuchAlgorithmException;
 
 import static org.junit.Assert.*;
 
@@ -12,6 +13,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import com.quiltdata.quiltcore.key.LocalPhysicalKey;
 import com.quiltdata.quiltcore.key.PhysicalKey;
 
 
@@ -20,7 +22,7 @@ public class RegistryTest {
     public TemporaryFolder installFolder = new TemporaryFolder();
 
     @Test
-    public void testS3() {
+    public void testS3Install() {
         try {
             PhysicalKey p = PhysicalKey.fromUri(new URI("s3://quilt-example/"));
 
@@ -69,6 +71,41 @@ public class RegistryTest {
             e.printStackTrace();
             fail();
         } catch (URISyntaxException e) {
+            e.printStackTrace();
+            fail();
+        }
+    }
+
+    @Test
+    public void testS3Push() {
+        try {
+            Path dir = Path.of("src", "test", "resources", "dir").toAbsolutePath();
+
+            PhysicalKey p = PhysicalKey.fromUri(new URI("s3://quilt-dima2/"));
+
+            Registry r = new Registry(p);
+            Namespace n = r.getNamespace("dima/java_test");
+
+            Path foo = dir.resolve("foo.txt");
+            Path bar = dir.resolve("bar.txt");
+
+            Manifest.Builder b = Manifest.builder();
+            b.addEntry("foo", new Entry(new LocalPhysicalKey(foo), Files.size(bar), null));
+            b.addEntry("bar", new Entry(new LocalPhysicalKey(bar), Files.size(bar), null));
+            Manifest m = b.build();
+
+            Manifest m2 = m.push(n, null);
+
+            String topHash = m2.calculateTopHash();
+
+            assertEquals("b9033f634856bd48cf9eb12d8e9cd75e2d4d6975e63544b009b8ec1dd349f861", topHash);
+        } catch (IOException e) {
+            e.printStackTrace();
+            fail();
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+            fail();
+        } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
             fail();
         }
