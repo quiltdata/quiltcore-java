@@ -29,6 +29,8 @@ public class RegistryTest {
             String hash = n.getHash("latest");
             Manifest m = n.getManifest(hash);
 
+            assertEquals("use realworld data", m.getMessage());
+
             Entry e = m.getEntry("README.md");
 
             byte[] data = e.getBytes();

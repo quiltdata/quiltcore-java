@@ -28,11 +28,19 @@ import software.amazon.awssdk.transfer.s3.progress.LoggingTransferListener;
 
 
 public class Manifest {
+    public static final String VERSION = "v0";
+
     public static class Builder {
+        private String message;
         private Map<String, Entry> entries;
 
         public Builder() {
+            message = null;
             entries = new HashMap<>();
+        }
+
+        public void setMessage(String message) {
+            this.message = message;
         }
 
         public void addEntry(String key, Entry entry) {
@@ -40,13 +48,15 @@ public class Manifest {
         }
 
         public Manifest build() {
-            return new Manifest(entries);
+            return new Manifest(message, entries);
         }
     }
 
+    private String message;
     private Map<String, Entry> entries;
 
-    private Manifest(Map<String, Entry> entries) {
+    private Manifest(String message, Map<String, Entry> entries) {
+        this.message = message;
         this.entries = entries;
     }
 
@@ -63,9 +73,11 @@ public class Manifest {
             String header = reader.readLine();
             JsonNode node = mapper.readTree(header);
             String version = node.get("version").asText();
-            if (!version.equals("v0")) {
+            if (!version.equals(VERSION)) {
                 throw new IOException("Unsupported manifest version: " + version);
             }
+            String message = node.get("message").asText();
+            builder.setMessage(message);
             // TODO: package metadata
 
             String line;
@@ -87,6 +99,10 @@ public class Manifest {
         }
 
         return builder.build();
+    }
+
+    public String getMessage() {
+        return message;
     }
 
     public Entry getEntry(String logicalKey) {
