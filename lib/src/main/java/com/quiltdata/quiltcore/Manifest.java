@@ -24,10 +24,13 @@ import java.util.stream.Collectors;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.quiltdata.quiltcore.key.LocalPhysicalKey;
 import com.quiltdata.quiltcore.key.PhysicalKey;
 import com.quiltdata.quiltcore.key.S3PhysicalKey;
+import com.quiltdata.quiltcore.ser.PythonDoubleSerializer;
 
 import software.amazon.awssdk.services.s3.S3AsyncClient;
 import software.amazon.awssdk.services.s3.model.PutObjectResponse;
@@ -45,17 +48,27 @@ import software.amazon.awssdk.utils.BinaryUtils;
 public class Manifest {
     public static final String VERSION = "v0";
 
+    private static final ObjectMapper TOP_HASH_MAPPER;
+
+    static {
+        TOP_HASH_MAPPER = new ObjectMapper();
+        SimpleModule sm = new SimpleModule();
+        sm.addSerializer(Double.class, new PythonDoubleSerializer());
+        TOP_HASH_MAPPER.registerModule(sm);
+        TOP_HASH_MAPPER.enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS);
+    }
+
     public static class Builder {
-        private String message;
         private SortedMap<String, Entry> entries;
+        private ObjectNode metadata;
 
         public Builder() {
-            message = null;
             entries = new TreeMap<>();
+            metadata = null;
         }
 
-        public void setMessage(String message) {
-            this.message = message;
+        public void setMetadata(ObjectNode metadata) {
+            this.metadata = metadata;
         }
 
         public void addEntry(String key, Entry entry) {
@@ -63,16 +76,18 @@ public class Manifest {
         }
 
         public Manifest build() {
-            return new Manifest(message, entries);
+            return new Manifest(entries, metadata);
         }
     }
 
-    private String message;
-    private Map<String, Entry> entries;
+    private SortedMap<String, Entry> entries;
+    private ObjectNode metadata;
 
-    private Manifest(String message, Map<String, Entry> entries) {
-        this.message = message;
+    private Manifest(SortedMap<String, Entry> entries, ObjectNode metadata) {
         this.entries = entries;
+        this.metadata = metadata == null
+            ? JsonNodeFactory.instance.objectNode().put("version", VERSION)
+            : metadata.deepCopy();
     }
 
     public static Builder builder() {
@@ -87,28 +102,42 @@ public class Manifest {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(path.getInputStream()))) {
             String header = reader.readLine();
             JsonNode node = mapper.readTree(header);
-            String version = node.get("version").asText();
+            if (!node.isObject()) {
+                throw new IOException("Invalid manifest metadata: " + node);
+            }
+            ObjectNode manifestMeta = (ObjectNode)node;
+            String version = manifestMeta.get("version").asText();
             if (!version.equals(VERSION)) {
                 throw new IOException("Unsupported manifest version: " + version);
             }
-            String message = node.get("message").asText();
-            builder.setMessage(message);
-            // TODO: package metadata
+            builder.setMetadata(manifestMeta);
 
             String line;
             while ((line = reader.readLine()) != null) {
                 JsonNode row = mapper.readTree(line);
 
                 String logicalKey = row.get("logical_key").asText();
-                String physicalKeyString = row.get("physical_keys").get(0).asText();
+                JsonNode physicalKeysNode = row.get("physical_keys");
+                if (physicalKeysNode == null) {
+                    // TODO: Handle directory-level metadata?
+                    continue;
+                }
+                String physicalKeyString = physicalKeysNode.get(0).asText();
                 PhysicalKey physicalKey = PhysicalKey.fromUri(new URI(physicalKeyString));
                 long size = row.get("size").asLong();
                 JsonNode hashNode = row.get("hash");
                 Entry.HashType hashType = Entry.HashType.valueOf(hashNode.get("type").asText());
                 String hashValue = hashNode.get("value").asText();
-                // TODO: entry metadata
+                JsonNode meta = row.get("meta");
+                if (meta == null) {
+                    // leave it as is
+                } else if (meta.isNull()) {
+                    meta = null;
+                } else if (!meta.isObject()) {
+                    throw new IOException("Invalid entry metadata: " + node);
+                }
 
-                Entry entry = new Entry(physicalKey, size, new Entry.Hash(hashType, hashValue));
+                Entry entry = new Entry(physicalKey, size, new Entry.Hash(hashType, hashValue), (ObjectNode)meta);
                 builder.addEntry(logicalKey, entry);
             }
         }
@@ -119,12 +148,12 @@ public class Manifest {
     public void serializeToOutputStream(OutputStream out) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
 
-        ObjectNode header = mapper.createObjectNode()
-            .put("version", VERSION)
-            .put("message", message);
-            // TODO: meta
+        String version = metadata.get("version").asText();
+        if (!version.equals(VERSION)) {
+            throw new IOException("Unsupported manifest version: " + version);
+        }
 
-        out.write(mapper.writeValueAsBytes(header));
+        out.write(mapper.writeValueAsBytes(metadata));
         out.write('\n');
 
         for (Map.Entry<String, Entry> e : entries.entrySet()) {
@@ -142,27 +171,36 @@ public class Manifest {
             row.putArray("physical_keys").add(physicalKey);
             row.put("size", entry.getSize());
             row.putPOJO("hash", entry.getHash());
-            row.set("meta", mapper.createObjectNode()); // TODO
+            row.set("meta", entry.getMetadata());
 
             out.write(mapper.writeValueAsBytes(row));
             out.write('\n');
         }
     }
 
-    public String calculateTopHash() throws NoSuchAlgorithmException, IOException {
-        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+    public String calculateTopHash() throws IOException {
+        MessageDigest digest;
+        try {
+            digest = MessageDigest.getInstance("SHA-256");
+        } catch (NoSuchAlgorithmException e) {
+            // This should never happen, and if it does happen, there's nothing we can do.
+            // Let's not require the caller to handle it.
+            throw new RuntimeException(e);
+        }
 
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
+        /* Everything has to be serialized exactly as quilt3 in order for the hash to match:
+         * - No spaces (already the default)
+         * - Sorted object keys
+         * - Floating point numbers formatted the same as in Python
+         *
+         * To do this, we convert existing JSON objects to native Java objects first,
+         * and use a custom Double serializer (otherwise, serialization overrides don't work).
+         * Inefficient, but hopefully correct.
+         */
 
-        // NOTE: Keys must be ordered alphabetically!
-        // ORDER_MAP_ENTRIES_BY_KEYS only applies to whole objects, not to keys set explicitly.
-        ObjectNode header = mapper.createObjectNode()
-            .put("message", message)
-            .put("version", VERSION);
-            // TODO: meta
-
-        digest.update(mapper.writeValueAsBytes(header));
+        Object metadataObj = TOP_HASH_MAPPER.treeToValue(metadata, Object.class);
+        byte[] headerBytes = TOP_HASH_MAPPER.writeValueAsBytes(metadataObj);
+        digest.update(headerBytes);
 
         for (Map.Entry<String, Entry> e : entries.entrySet()) {
             String logicalKey = e.getKey();
@@ -172,27 +210,23 @@ public class Manifest {
                 throw new IOException("Cannot calculate top hash for entries without hashes!");
             }
 
-            // Use a map to take advantage of key sorting.
             Map<String, Object> row = Map.of(
                 "logical_key", logicalKey,
                 "hash", entry.getHash(),
                 "size", entry.getSize(),
-                "meta", Map.of()
+                "meta", TOP_HASH_MAPPER.treeToValue(entry.getMetadata(), Object.class)
             );
 
-            byte[] bytes = mapper.writeValueAsBytes(row);
-            String tmp = new String(bytes);
-            System.out.println(tmp);
+            byte[] bytes = TOP_HASH_MAPPER.writeValueAsBytes(row);
             digest.update(bytes);
         }
 
         return BinaryUtils.toHex(digest.digest());
     }
 
-    public String getMessage() {
-        return message;
+    public ObjectNode getMetadata() {
+        return metadata.deepCopy();
     }
-
 
     public Entry getEntry(String logicalKey) {
         return entries.get(logicalKey);
@@ -291,7 +325,9 @@ public class Manifest {
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
         Builder builder = builder();
-        builder.setMessage(message);
+        ObjectNode newMetadata = getMetadata();
+        newMetadata.put("message", message);
+        builder.setMetadata(newMetadata);
 
         try(
             S3TransferManager transferManager =
@@ -331,7 +367,7 @@ public class Manifest {
                 Entry origEntry = entriesWithHashes.get(logicalKey);
                 String destPath = namespace.getName() + "/" + logicalKey;
                 S3PhysicalKey dest = new S3PhysicalKey(destBucket, destPath, uploadResponse.versionId());
-                builder.addEntry(logicalKey, new Entry(dest, origEntry.getSize(), origEntry.getHash()));
+                builder.addEntry(logicalKey, new Entry(dest, origEntry.getSize(), origEntry.getHash(), origEntry.getMetadata()));
             }
         } catch (CompletionException ex) {
             throw new IOException("Push failed", ex.getCause());

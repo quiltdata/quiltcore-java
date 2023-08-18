@@ -13,6 +13,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.quiltdata.quiltcore.key.LocalPhysicalKey;
 import com.quiltdata.quiltcore.key.PhysicalKey;
 
@@ -20,6 +21,27 @@ import com.quiltdata.quiltcore.key.PhysicalKey;
 public class RegistryTest {
     @Rule
     public TemporaryFolder installFolder = new TemporaryFolder();
+
+    @Test
+    public void testLocalPackage() {
+        try {
+            Path dir = Path.of("src", "test", "resources", "packages").toAbsolutePath();
+            PhysicalKey p = new LocalPhysicalKey(dir);
+
+            Registry r = new Registry(p);
+            Namespace n = r.getNamespace("test/test");
+            String hash = n.getHash("latest");
+            Manifest m = n.getManifest(hash);
+
+            assertEquals(hash, m.calculateTopHash());
+        } catch (IOException e) {
+            e.printStackTrace();
+            fail();
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+            fail();
+        }
+    }
 
     @Test
     public void testS3Install() {
@@ -31,7 +53,9 @@ public class RegistryTest {
             String hash = n.getHash("latest");
             Manifest m = n.getManifest(hash);
 
-            assertEquals("use realworld data", m.getMessage());
+            ObjectNode metadata = m.getMetadata();
+            assertEquals("use realworld data", metadata.get("message").asText());
+            assertEquals(4782, metadata.get("user_meta").get("dna_surface_area").asInt());
 
             Entry e = m.getEntry("README.md");
 
@@ -39,6 +63,10 @@ public class RegistryTest {
             String readme = new String(data);
 
             assertTrue(readme.startsWith("# Working with metadata in Quilt packages"));
+
+            assertTrue(e.getMetadata().isEmpty());
+
+            assertEquals(hash, m.calculateTopHash());
 
             Path dest = installFolder.newFolder().toPath();
             m.install(dest);
@@ -90,8 +118,8 @@ public class RegistryTest {
             Path bar = dir.resolve("bar.txt");
 
             Manifest.Builder b = Manifest.builder();
-            b.addEntry("foo", new Entry(new LocalPhysicalKey(foo), Files.size(bar), null));
-            b.addEntry("bar", new Entry(new LocalPhysicalKey(bar), Files.size(bar), null));
+            b.addEntry("foo", new Entry(new LocalPhysicalKey(foo), Files.size(bar), null, null));
+            b.addEntry("bar", new Entry(new LocalPhysicalKey(bar), Files.size(bar), null, null));
             Manifest m = b.build();
 
             Manifest m2 = m.push(n, null);

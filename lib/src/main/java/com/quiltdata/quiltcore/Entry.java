@@ -5,6 +5,8 @@ import java.io.InputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.quiltdata.quiltcore.key.PhysicalKey;
 
 import software.amazon.awssdk.utils.BinaryUtils;
@@ -28,11 +30,13 @@ public class Entry {
     private PhysicalKey physicalKey;
     private long size;
     private Hash hash;
+    private ObjectNode metadata;
 
-    public Entry(PhysicalKey physicalKey, long size, Hash hash) {
+    public Entry(PhysicalKey physicalKey, long size, Hash hash, ObjectNode metadata) {
         this.physicalKey = physicalKey;
         this.size = size;
         this.hash = hash;
+        this.metadata = metadata == null ? JsonNodeFactory.instance.objectNode() : metadata.deepCopy();
     }
 
     public PhysicalKey getPhysicalKey() {
@@ -45,6 +49,11 @@ public class Entry {
 
     public Hash getHash() {
         return hash;
+    }
+
+    // All metadata, not just "user_meta"
+    public ObjectNode getMetadata() {
+        return metadata.deepCopy();
     }
 
     public byte[] getBytes() throws IOException {
@@ -67,6 +76,6 @@ public class Entry {
             }
         }
         String hash = BinaryUtils.toHex(digest.digest());
-        return new Entry(physicalKey, size, new Hash(HashType.SHA256, hash));
+        return new Entry(physicalKey, size, new Hash(HashType.SHA256, hash), metadata);
     }
 }
