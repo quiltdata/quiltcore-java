@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -258,6 +259,8 @@ public class Manifest {
                     for (CompletableFuture<CompletedFileDownload> future : futures) {
                         future.join();
                     }
+                } catch (CompletionException ex) {
+                    throw new IOException("Install failed", ex.getCause());
                 }
             }
         }
@@ -330,6 +333,8 @@ public class Manifest {
                 S3PhysicalKey dest = new S3PhysicalKey(destBucket, destPath, uploadResponse.versionId());
                 builder.addEntry(logicalKey, new Entry(dest, origEntry.getSize(), origEntry.getHash()));
             }
+        } catch (CompletionException ex) {
+            throw new IOException("Push failed", ex.getCause());
         }
 
         Manifest newManifest = builder.build();
