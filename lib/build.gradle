@@ -9,7 +9,7 @@
 plugins {
     // Apply the java-library plugin for API and implementation separation.
     id 'java-library'
-    id 'java-library-distribution'
+    id 'maven-publish'
 }
 
 repositories {
@@ -33,12 +33,26 @@ dependencies {
 // Apply a specific Java toolchain to ease working on different environments.
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
+        languageVersion = JavaLanguageVersion.of(11)
     }
 }
 
-distributions {
-    main {
-        distributionBaseName = 'quiltcore'
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId = 'com.quiltdata.quiltcore'
+            artifactId = 'quiltcore'
+            version = '0.0.1'
+
+            from components.java
+        }
+    }
+    repositories {
+        maven {
+            url "s3://quilt-dima/maven/releases"
+            authentication {
+                awsIm(AwsImAuthentication)
+            }
+        }
     }
 }
