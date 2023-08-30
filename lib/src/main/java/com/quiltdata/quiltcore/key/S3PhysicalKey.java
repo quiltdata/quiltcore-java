@@ -7,15 +7,19 @@ import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.NoSuchFileException;
 import java.util.stream.Stream;
 
 import com.quiltdata.quiltcore.S3ClientStore;
 
+import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.NoSuchBucketException;
+import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.paginators.ListObjectsV2Iterable;
@@ -87,8 +91,7 @@ public class S3PhysicalKey extends PhysicalKey {
         return key.length() == 0 || key.charAt(key.length() - 1) == '/';
     }
 
-    @Override
-    public InputStream getInputStream() throws IOException {
+    private ResponseInputStream<GetObjectResponse> getObject() throws IOException {
         S3Client s3 = getClient();
 
         GetObjectRequest objectRequest = GetObjectRequest.builder()
@@ -99,9 +102,24 @@ public class S3PhysicalKey extends PhysicalKey {
 
         try {
             return s3.getObject(objectRequest);
+        } catch (NoSuchKeyException e) {
+            // Use NoSuchFileException rather than FileNotFoundException to stay consistent with LocalPhysicalKey.
+            throw new NoSuchFileException(toUri().toString());
         } catch (S3Exception e) {
             throw new IOException("Could not read uri: " + toUri(), e);
         }
+    }
+
+    @Override
+    public OpenResponse open() throws IOException {
+        var inputStream = getObject();
+        String effectiveVersionId = inputStream.response().versionId();
+        return new OpenResponse(inputStream, new S3PhysicalKey(bucket, key, effectiveVersionId));
+    }
+
+    @Override
+    public InputStream getInputStream() throws IOException {
+        return getObject();
     }
 
     @Override

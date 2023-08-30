@@ -23,8 +23,12 @@ dependencies {
     implementation 'software.amazon.awssdk:s3-transfer-manager:2.20.102'
     implementation 'software.amazon.awssdk.crt:aws-crt:0.23.2'
 
-    // JSON parsing.
+    // JSON and YAML parsing.
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.2'
+    implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.15.2'
+
+    // JSON Schema validator.
+    implementation 'io.vertx:vertx-json-schema:4.4.4'
 
     // Use JUnit test framework.
     testImplementation 'junit:junit:4.13.2'
@@ -42,7 +46,7 @@ publishing {
         maven(MavenPublication) {
             groupId = 'com.quiltdata.quiltcore'
             artifactId = 'quiltcore'
-            version = '0.0.2'
+            version = '0.0.4'
 
             from components.java
         }

@@ -51,6 +51,11 @@ public class LocalPhysicalKey extends PhysicalKey {
     }
 
     @Override
+    public OpenResponse open() throws IOException {
+        return new OpenResponse(getInputStream(), this);
+    }
+
+    @Override
     public InputStream getInputStream() throws IOException {
         Path p = Path.of(path);
         return Files.newInputStream(p);

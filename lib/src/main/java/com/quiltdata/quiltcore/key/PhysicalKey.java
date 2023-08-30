@@ -6,6 +6,18 @@ import java.net.URI;
 import java.util.stream.Stream;
 
 public abstract class PhysicalKey {
+    public static class OpenResponse {
+        public final InputStream inputStream;
+        public final PhysicalKey effectivePhysicalKey;
+
+        public OpenResponse(InputStream inputStream, PhysicalKey effectivePhysicalKey) {
+            this.inputStream = inputStream;
+            this.effectivePhysicalKey = effectivePhysicalKey;
+        }
+    }
+
+    public abstract OpenResponse open() throws IOException;
+
     public abstract InputStream getInputStream() throws IOException;
 
     public byte[] getBytes() throws IOException {
@@ -19,6 +31,11 @@ public abstract class PhysicalKey {
     public abstract PhysicalKey resolve(String child);
 
     public abstract URI toUri();
+
+    @Override
+    public String toString() {
+        return toUri().toString();
+    }
 
     // TODO: Include file sizes?
     public abstract Stream<String> listRecursively() throws IOException;

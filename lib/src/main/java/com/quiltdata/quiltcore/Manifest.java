@@ -28,10 +28,15 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import com.quiltdata.quiltcore.key.LocalPhysicalKey;
 import com.quiltdata.quiltcore.key.PhysicalKey;
 import com.quiltdata.quiltcore.key.S3PhysicalKey;
 import com.quiltdata.quiltcore.ser.PythonDoubleSerializer;
+import com.quiltdata.quiltcore.workflows.ConfigurationException;
+import com.quiltdata.quiltcore.workflows.WorkflowConfig;
+import com.quiltdata.quiltcore.workflows.WorkflowException;
+import com.quiltdata.quiltcore.workflows.WorkflowValidator;
 
 import software.amazon.awssdk.services.s3.S3AsyncClient;
 import software.amazon.awssdk.services.s3.model.PutObjectResponse;
@@ -302,11 +307,26 @@ public class Manifest {
         }
     }
 
-    public Manifest push(Namespace namespace, String message) throws IOException, NoSuchAlgorithmException {
+    private void validate(Namespace namespace, String message, String workflow) throws ConfigurationException, WorkflowException {
+        WorkflowConfig config = namespace.getRegistry().getWorkflowConfig();
+        if (config == null) {
+            if (workflow == null) {
+                return;
+            }
+            throw new WorkflowException("Workflow is specified, but no workflows config exists");
+        }
+
+        WorkflowValidator validator = config.getWorkflowValidator(workflow);
+        validator.validate(namespace.getName(), entries, metadata, message);
+    }
+
+    public Manifest push(Namespace namespace, String message, String workflow) throws IOException, ConfigurationException, WorkflowException {
         PhysicalKey namespacePath = namespace.getPath();
         if (!(namespacePath instanceof S3PhysicalKey)) {
             throw new IOException("Only S3 namespace supported");
         }
+
+        validate(namespace, message, workflow);
 
         S3PhysicalKey s3NamespacePath = (S3PhysicalKey)namespacePath;
         String destBucket = s3NamespacePath.getBucket();

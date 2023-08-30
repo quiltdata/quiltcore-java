@@ -5,7 +5,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.NoSuchAlgorithmException;
 
 import static org.junit.Assert.*;
 
@@ -13,9 +12,12 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.quiltdata.quiltcore.key.LocalPhysicalKey;
 import com.quiltdata.quiltcore.key.PhysicalKey;
+import com.quiltdata.quiltcore.workflows.ConfigurationException;
+import com.quiltdata.quiltcore.workflows.WorkflowException;
 
 
 public class RegistryTest {
@@ -118,11 +120,11 @@ public class RegistryTest {
             Path bar = dir.resolve("bar.txt");
 
             Manifest.Builder b = Manifest.builder();
-            b.addEntry("foo", new Entry(new LocalPhysicalKey(foo), Files.size(bar), null, null));
+            b.addEntry("foo", new Entry(new LocalPhysicalKey(foo), Files.size(foo), null, null));
             b.addEntry("bar", new Entry(new LocalPhysicalKey(bar), Files.size(bar), null, null));
             Manifest m = b.build();
 
-            Manifest m2 = m.push(n, null);
+            Manifest m2 = m.push(n, null, null);
 
             String topHash = m2.calculateTopHash();
 
@@ -133,7 +135,47 @@ public class RegistryTest {
         } catch (URISyntaxException e) {
             e.printStackTrace();
             fail();
-        } catch (NoSuchAlgorithmException e) {
+        } catch (ConfigurationException e) {
+            e.printStackTrace();
+            fail();
+        } catch (WorkflowException e) {
+            e.printStackTrace();
+            fail();
+        }
+    }
+
+    @Test
+    public void testS3WorkflowPush() {
+        try {
+            Path dir = Path.of("src", "test", "resources", "dir").toAbsolutePath();
+
+            PhysicalKey p = PhysicalKey.fromUri(new URI("s3://quilt-dima2/"));
+
+            Registry r = new Registry(p);
+            Namespace n = r.getNamespace("dima/java_workflow_test");
+
+            Path foo = dir.resolve("foo.txt");
+
+            Manifest.Builder b = Manifest.builder();
+            ObjectNode packageMeta = JsonNodeFactory.instance.objectNode()
+                .put("version", "v0")
+                .put("user_meta", "123456");
+            b.setMetadata(packageMeta);
+            ObjectNode meta = JsonNodeFactory.instance.objectNode().put("foo", "bar");
+            b.addEntry("README.md", new Entry(new LocalPhysicalKey(foo), Files.size(foo), null, meta));
+            Manifest m = b.build();
+
+            m.push(n, "commit stuff", "alpha");
+        } catch (IOException e) {
+            e.printStackTrace();
+            fail();
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+            fail();
+        } catch (ConfigurationException e) {
+            e.printStackTrace();
+            fail();
+        } catch (WorkflowException e) {
             e.printStackTrace();
             fail();
         }
