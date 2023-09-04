@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
@@ -76,7 +77,10 @@ public class Manifest {
         }
 
         public Manifest build() {
-            return new Manifest(entries, metadata);
+            return new Manifest(
+                Collections.unmodifiableSortedMap(entries),
+                metadata == null ? JsonNodeFactory.instance.objectNode().put("version", VERSION) : metadata.deepCopy()
+            );
         }
     }
 
@@ -85,9 +89,7 @@ public class Manifest {
 
     private Manifest(SortedMap<String, Entry> entries, ObjectNode metadata) {
         this.entries = entries;
-        this.metadata = metadata == null
-            ? JsonNodeFactory.instance.objectNode().put("version", VERSION)
-            : metadata.deepCopy();
+        this.metadata = metadata;
     }
 
     public static Builder builder() {
@@ -224,12 +226,12 @@ public class Manifest {
         return BinaryUtils.toHex(digest.digest());
     }
 
-    public ObjectNode getMetadata() {
-        return metadata.deepCopy();
+    public SortedMap<String, Entry> getEntries() {
+        return entries;
     }
 
-    public Entry getEntry(String logicalKey) {
-        return entries.get(logicalKey);
+    public ObjectNode getMetadata() {
+        return metadata.deepCopy();
     }
 
     private Path resolveDest(Path dest, String logicalKey) throws IOException {

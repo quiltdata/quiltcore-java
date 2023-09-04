@@ -57,7 +57,7 @@ public class RegistryTest {
             assertEquals("use realworld data", metadata.get("message").asText());
             assertEquals(4782, metadata.get("user_meta").get("dna_surface_area").asInt());
 
-            Entry e = m.getEntry("README.md");
+            Entry e = m.getEntries().get("README.md");
 
             byte[] data = e.getBytes();
             String readme = new String(data);
