@@ -2,23 +2,24 @@ package com.quiltdata.quiltcore;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 
 import org.junit.Test;
 
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.quiltdata.quiltcore.key.LocalPhysicalKey;
-import com.quiltdata.quiltcore.key.S3PhysicalKey;
 import com.quiltdata.quiltcore.workflows.ConfigDataVersion;
 import com.quiltdata.quiltcore.workflows.ConfigurationException;
 import com.quiltdata.quiltcore.workflows.WorkflowConfig;
+import com.quiltdata.quiltcore.workflows.WorkflowException;
+import com.quiltdata.quiltcore.workflows.WorkflowValidator;
 
-import io.vertx.core.json.JsonObject;
-import io.vertx.json.schema.JsonSchema;
 
 public class WorkflowsTest {
     @Test
@@ -35,27 +36,47 @@ public class WorkflowsTest {
 
     @Test
     public void testWorkflows() {
-//        SchemaRepository repo = SchemaRepository.create(new JsonSchemaOptions());
-
         try {
             Path path = Path.of("src", "test", "resources", "config.yml").toAbsolutePath();
-            // S3PhysicalKey key = new S3PhysicalKey("quilt-dima", "config.yml", null);
-            // WorkflowConfig config = WorkflowConfig.load(key);
             WorkflowConfig config = WorkflowConfig.load(new LocalPhysicalKey(path));
 
             assertNotEquals(null, config);
 
-            System.out.println(config);
+            WorkflowValidator validator = config.getWorkflowValidator("alpha");
 
-            // Files.newInputStream(path);
+            ObjectNode pkgMeta = JsonNodeFactory.instance.objectNode()
+                .put("VERSION", "v0")
+                .put("user_meta", "blah");
+            ObjectNode readmeMeta = JsonNodeFactory.instance.objectNode()
+                .put("foo", "bar");
+            Entry readme = new Entry(null, 10, null, readmeMeta);
 
-            // Path jsonPath = Path.of("src", "main", "resources", "config-1.schema.json");
-            // String contents = Files.readString(jsonPath);
+            // Good package.
+            validator.validate("test/foo", Map.of("README.md", readme), pkgMeta, "blah");
 
-            // JsonObject obj = new JsonObject(contents);
+            // Bad name.
+            assertThrows(WorkflowException.class, () -> {
+                validator.validate("zzz/foo", Map.of("README.md", readme), pkgMeta, "blah");
+            });
 
-            // JsonSchema schema = JsonSchema.of(obj);
+            // Missing commit message.
+            assertThrows(WorkflowException.class, () -> {
+                validator.validate("test/foo", Map.of("README.md", readme), pkgMeta, null);
+            });
+
+            // Missing README.
+            assertThrows(WorkflowException.class, () -> {
+                validator.validate("test/foo", Map.of(), pkgMeta, "blah");
+            });
+
+            // Wrong package metadata.
+            assertThrows(WorkflowException.class, () -> {
+                validator.validate("test/foo", Map.of("README.md", readme), readmeMeta, "blah");
+            });
         } catch (ConfigurationException e) {
+            e.printStackTrace();
+            fail();
+        } catch (WorkflowException e) {
             e.printStackTrace();
             fail();
         }

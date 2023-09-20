@@ -1,0 +1,15 @@
+version:
+  base: "1"
+is_workflow_required: false
+workflows:
+  alpha:
+    name: Test
+    is_message_required: true
+    metadata_schema: meta
+    handle_pattern: ^test/.+$
+    entries_schema: entries
+schemas:
+  meta:
+    url: s3://quilt-dima2/schemas/meta.json
+  entries:
+    url: s3://quilt-dima2/schemas/entries.json
