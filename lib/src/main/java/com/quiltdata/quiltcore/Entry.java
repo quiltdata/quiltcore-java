@@ -62,12 +62,20 @@ public class Entry {
         return physicalKey.getBytes();
     }
 
-    public Entry withHash() throws NoSuchAlgorithmException, IOException {
+    public Entry withHash() throws IOException {
         if (hash != null) {
             return this;
         }
 
-        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        MessageDigest digest;
+        try {
+            digest = MessageDigest.getInstance("SHA-256");
+        } catch (NoSuchAlgorithmException e) {
+            // This should never happen, and if it does happen, there's nothing we can do.
+            // Let's not require the caller to handle it.
+            throw new RuntimeException(e);
+        }
+
         try (InputStream in = physicalKey.getInputStream()) {
             byte[] buffer = new byte[4096];
             int count;

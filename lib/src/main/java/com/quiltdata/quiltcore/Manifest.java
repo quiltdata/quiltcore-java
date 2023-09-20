@@ -338,8 +338,6 @@ public class Manifest {
             .map(entry -> {
                 try {
                     return Map.entry(entry.getKey(), entry.getValue().withHash());
-                } catch (NoSuchAlgorithmException e) {
-                    throw new RuntimeException(e);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
