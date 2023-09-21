@@ -119,11 +119,13 @@ public class RegistryTest {
             b.addEntry("bar", new Entry(new LocalPhysicalKey(bar), Files.size(bar), null, null));
             Manifest m = b.build();
 
-            Manifest m2 = m.push(n, null, null);
+            Manifest m2 = m.push(n, null, "");
+
+            assertTrue(m2.getMetadata().get("workflow").get("id").isNull());
 
             String topHash = m2.calculateTopHash();
 
-            assertEquals("b9033f634856bd48cf9eb12d8e9cd75e2d4d6975e63544b009b8ec1dd349f861", topHash);
+            assertEquals("97ea1254aab77d28e0f459a739351879b46e6e6142efdab327abf6ab6bdf72dd", topHash);
         } catch (IOException e) {
             e.printStackTrace();
             fail();
@@ -160,7 +162,9 @@ public class RegistryTest {
             b.addEntry("README.md", new Entry(new LocalPhysicalKey(foo), Files.size(foo), null, meta));
             Manifest m = b.build();
 
-            m.push(n, "commit stuff", "alpha");
+            Manifest m2 = m.push(n, "commit stuff", "alpha");
+
+            assertEquals("alpha", m2.getMetadata().get("workflow").get("id").asText());
         } catch (IOException e) {
             e.printStackTrace();
             fail();

@@ -7,9 +7,11 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.quiltdata.quiltcore.key.LocalPhysicalKey;
+import com.quiltdata.quiltcore.key.PhysicalKey;
 import com.quiltdata.quiltcore.workflows.ConfigDataVersion;
 import com.quiltdata.quiltcore.workflows.ConfigurationException;
 import com.quiltdata.quiltcore.workflows.WorkflowConfig;
@@ -34,11 +36,17 @@ public class WorkflowsTest {
     public void testWorkflows() {
         try {
             Path path = Path.of("src", "test", "resources", "config.yml").toAbsolutePath();
-            WorkflowConfig config = WorkflowConfig.load(new LocalPhysicalKey(path));
+            PhysicalKey key = new LocalPhysicalKey(path);
+            WorkflowConfig config = WorkflowConfig.load(key);
 
             assertNotEquals(null, config);
 
             WorkflowValidator validator = config.getWorkflowValidator("alpha");
+
+            JsonNode data = validator.getDataToStore();
+            assertEquals("alpha", data.get("id").asText());
+            assertEquals(key.toString(), data.get("config").asText());
+            assertTrue(data.get("schemas").get("meta").asText().contains("?versionId="));
 
             ObjectNode pkgMeta = JsonNodeFactory.instance.objectNode()
                 .put("VERSION", "v0")

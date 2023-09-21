@@ -307,17 +307,18 @@ public class Manifest {
         }
     }
 
-    private void validate(Namespace namespace, String message, String workflow) throws ConfigurationException, WorkflowException {
+    private JsonNode validate(Namespace namespace, String message, String workflow) throws ConfigurationException, WorkflowException {
         WorkflowConfig config = namespace.getRegistry().getWorkflowConfig();
         if (config == null) {
             if (workflow == null) {
-                return;
+                return null;
             }
             throw new WorkflowException("Workflow is specified, but no workflows config exists");
         }
 
         WorkflowValidator validator = config.getWorkflowValidator(workflow);
         validator.validate(namespace.getName(), entries, metadata, message);
+        return validator.getDataToStore();
     }
 
     public Manifest push(Namespace namespace, String message, String workflow) throws IOException, ConfigurationException, WorkflowException {
@@ -326,7 +327,7 @@ public class Manifest {
             throw new IOException("Only S3 namespace supported");
         }
 
-        validate(namespace, message, workflow);
+        JsonNode workflowInfo = validate(namespace, message, workflow);
 
         S3PhysicalKey s3NamespacePath = (S3PhysicalKey)namespacePath;
         String destBucket = s3NamespacePath.getBucket();
@@ -347,6 +348,11 @@ public class Manifest {
         Builder builder = builder();
         ObjectNode newMetadata = getMetadata();
         newMetadata.put("message", message);
+        if (workflowInfo != null) {
+            newMetadata.set("workflow", workflowInfo);
+        } else {
+            newMetadata.remove("workflow");
+        }
         builder.setMetadata(newMetadata);
 
         try(

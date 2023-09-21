@@ -15,12 +15,20 @@ import io.vertx.json.schema.OutputUnit;
 import io.vertx.json.schema.Validator;
 
 public class WorkflowValidator {
+    private JsonNode dataToStore;
     private boolean isMessageRequired;
     private Pattern pkgNamePattern;
     private Validator metadataValidator;
     private Validator entriesValidator;
 
-    public WorkflowValidator(boolean isMessageRequired, Pattern pkgNamePattern, Validator metadataValidator, Validator entriesValidator) {
+    public WorkflowValidator(
+        JsonNode dataToStore,
+        boolean isMessageRequired,
+        Pattern pkgNamePattern,
+        Validator metadataValidator,
+        Validator entriesValidator
+    ) {
+        this.dataToStore = dataToStore;
         this.isMessageRequired = isMessageRequired;
         this.pkgNamePattern = pkgNamePattern;
         this.metadataValidator = metadataValidator;
@@ -96,5 +104,9 @@ public class WorkflowValidator {
             // Should never happen.
             throw new RuntimeException(e);
         }
+    }
+
+    public JsonNode getDataToStore() {
+        return dataToStore.deepCopy();
     }
 }

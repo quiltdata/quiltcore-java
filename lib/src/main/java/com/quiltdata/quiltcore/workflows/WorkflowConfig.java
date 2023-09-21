@@ -59,11 +59,13 @@ public class WorkflowConfig {
     private JsonNode config;
     private PhysicalKey physicalKey;
     private Map<String, SchemaInfo> loadedSchemas;
+    private Map<String, SchemaInfo> loadedSchemasById;
 
     public WorkflowConfig(JsonNode config, PhysicalKey physicalKey) {
         this.config = config;
         this.physicalKey = physicalKey;
         loadedSchemas = new HashMap<>();
+        loadedSchemasById = new HashMap<>();
     }
 
     public static WorkflowConfig load(PhysicalKey physicalKey) throws ConfigurationException {
@@ -152,13 +154,32 @@ public class WorkflowConfig {
         JsonNode isMessageRequiredNode = workflowData.get("is_message_required");
         boolean isMessageRequired = isMessageRequiredNode != null ? isMessageRequiredNode.asBoolean(false) : false;
 
-        return new WorkflowValidator(isMessageRequired, pkgNamePattern, metadataValidator, entriesValidator);
+        var dataToStore = JsonNodeFactory.instance.objectNode()
+            .put("id", workflow.isEmpty() ? null : workflow)
+            .put("config", physicalKey.toString());
+        if (!loadedSchemasById.isEmpty()) {
+            System.out.println("adding schemas");
+            var schemaNode = JsonNodeFactory.instance.objectNode();
+            for (var entry : loadedSchemasById.entrySet()) {
+                schemaNode.put(entry.getKey(), entry.getValue().physicalKey.toString());
+            }
+            dataToStore.set("schemas", schemaNode);
+        }
+        System.out.println(dataToStore);
+
+        return new WorkflowValidator(dataToStore, isMessageRequired, pkgNamePattern, metadataValidator, entriesValidator);
     }
 
     private Validator makeValidatorFromSchema(String schemaId) throws ConfigurationException {
-        PhysicalKey schemaPhysicalKey = getPhysicalKeyForSchemaId(schemaId);
-        SchemaInfo info = loadedSchemas.get(schemaPhysicalKey.toString());
+        SchemaInfo info = loadedSchemasById.get(schemaId);
         if (info != null) {
+            return info.validator;
+        }
+
+        PhysicalKey schemaPhysicalKey = getPhysicalKeyForSchemaId(schemaId);
+        info = loadedSchemas.get(schemaPhysicalKey.toString());
+        if (info != null) {
+            loadedSchemasById.put(schemaId, info);
             return info.validator;
         }
 
@@ -194,6 +215,7 @@ public class WorkflowConfig {
         Validator validator = Validator.create(schema, options);
 
         info = new SchemaInfo(validator, schemaEffectivePhysicalKey);
+        loadedSchemasById.put(schemaId, info);
         loadedSchemas.put(schemaPhysicalKey.toString(), info);
         return validator;
     }
