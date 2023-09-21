@@ -6,11 +6,10 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -21,9 +20,6 @@ import com.quiltdata.quiltcore.workflows.WorkflowException;
 
 
 public class RegistryTest {
-    @Rule
-    public TemporaryFolder installFolder = new TemporaryFolder();
-
     @Test
     public void testLocalPackage() {
         try {
@@ -46,7 +42,7 @@ public class RegistryTest {
     }
 
     @Test
-    public void testS3Install() {
+    public void testS3Install(@TempDir Path dest) {
         try {
             PhysicalKey p = PhysicalKey.fromUri(new URI("s3://quilt-example/"));
 
@@ -70,7 +66,6 @@ public class RegistryTest {
 
             assertEquals(hash, m.calculateTopHash());
 
-            Path dest = installFolder.newFolder().toPath();
             m.install(dest);
 
             assertTrue(Files.exists(dest.resolve("README.md")));

@@ -31,13 +31,21 @@ dependencies {
     implementation 'io.vertx:vertx-json-schema:4.4.4'
 
     // Use JUnit test framework.
-    testImplementation 'junit:junit:4.13.2'
+    testImplementation('org.junit.jupiter:junit-jupiter:5.10.0')
 }
 
 // Apply a specific Java toolchain to ease working on different environments.
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(11)
+    }
+}
+
+test {
+    useJUnitPlatform()
+
+    testLogging {
+        events "passed", "skipped", "failed"
     }
 }
 
