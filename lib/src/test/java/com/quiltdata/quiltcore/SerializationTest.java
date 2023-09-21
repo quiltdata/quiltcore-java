@@ -1,6 +1,5 @@
 package com.quiltdata.quiltcore;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -16,24 +15,19 @@ import com.quiltdata.quiltcore.ser.PythonDoubleSerializer;
 
 public class SerializationTest {
     @Test
-    public void testFloat() {
+    public void testFloat() throws Exception {
         ObjectMapper mapper = new ObjectMapper();
         SimpleModule sm = new SimpleModule();
         sm.addSerializer(Double.class, new PythonDoubleSerializer());
         mapper.registerModule(sm);
 
-        try {
-            Path jsonPath = Path.of("src", "test", "resources", "python_floats.json");
-            String original = Files.readString(jsonPath);
+        Path jsonPath = Path.of("src", "test", "resources", "python_floats.json");
+        String original = Files.readString(jsonPath);
 
-            JsonNode node = mapper.readTree(original);
-            Object val = mapper.treeToValue(node, Object.class);
-            String serialized = mapper.writeValueAsString(val);
+        JsonNode node = mapper.readTree(original);
+        Object val = mapper.treeToValue(node, Object.class);
+        String serialized = mapper.writeValueAsString(val);
 
-            assertEquals(original, serialized);
-        } catch (IOException e) {
-            e.printStackTrace();
-            fail();
-        }
+        assertEquals(original, serialized);
     }
 }
