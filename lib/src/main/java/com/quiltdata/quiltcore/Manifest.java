@@ -29,6 +29,8 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import com.pivovarit.function.ThrowingFunction;
+
 import com.quiltdata.quiltcore.key.LocalPhysicalKey;
 import com.quiltdata.quiltcore.key.PhysicalKey;
 import com.quiltdata.quiltcore.key.S3PhysicalKey;
@@ -336,13 +338,7 @@ public class Manifest {
         Map<String, Entry> entriesWithHashes = entries.entrySet()
             .stream()
             .parallel()
-            .map(entry -> {
-                try {
-                    return Map.entry(entry.getKey(), entry.getValue().withHash());
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            })
+            .map(ThrowingFunction.sneaky(entry -> Map.entry(entry.getKey(), entry.getValue().withHash())))
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
         Builder builder = builder();

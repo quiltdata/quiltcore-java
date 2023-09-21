@@ -30,6 +30,9 @@ dependencies {
     // JSON Schema validator.
     implementation 'io.vertx:vertx-json-schema:4.4.4'
 
+    // Workarounds for Java's checked exceptions.
+    implementation 'com.pivovarit:throwing-function:1.5.1'
+
     // Use JUnit test framework.
     testImplementation('org.junit.jupiter:junit-jupiter:5.10.0')
 }

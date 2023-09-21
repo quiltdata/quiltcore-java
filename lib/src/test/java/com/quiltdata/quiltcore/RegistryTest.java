@@ -142,6 +142,29 @@ public class RegistryTest {
     }
 
     @Test
+    public void testS3PushErrors() {
+        try {
+            Path dir = Path.of("src", "test", "resources", "dir").toAbsolutePath();
+
+            PhysicalKey p = PhysicalKey.fromUri(new URI("s3://quilt-dima2/"));
+
+            Registry r = new Registry(p);
+            Namespace n = r.getNamespace("dima/java_test");
+
+            Path bad = dir.resolve("no such file.txt");
+
+            Manifest.Builder b = Manifest.builder();
+            b.addEntry("foo", new Entry(new LocalPhysicalKey(bad), 123, null, null));
+            Manifest m = b.build();
+
+            assertThrows(IOException.class, () -> m.push(n, null, ""));
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+            fail();
+        }
+    }
+
+    @Test
     public void testS3WorkflowPush() {
         try {
             Path dir = Path.of("src", "test", "resources", "dir").toAbsolutePath();
