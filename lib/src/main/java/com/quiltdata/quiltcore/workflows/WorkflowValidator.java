@@ -15,11 +15,11 @@ import io.vertx.json.schema.OutputUnit;
 import io.vertx.json.schema.Validator;
 
 public class WorkflowValidator {
-    private JsonNode dataToStore;
-    private boolean isMessageRequired;
-    private Pattern pkgNamePattern;
-    private Validator metadataValidator;
-    private Validator entriesValidator;
+    private final JsonNode dataToStore;
+    private final boolean isMessageRequired;
+    private final Pattern pkgNamePattern;
+    private final Validator metadataValidator;
+    private final Validator entriesValidator;
 
     public WorkflowValidator(
         JsonNode dataToStore,

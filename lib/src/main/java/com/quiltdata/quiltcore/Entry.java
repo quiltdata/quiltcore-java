@@ -27,10 +27,10 @@ public class Entry {
         }
     }
 
-    private PhysicalKey physicalKey;
-    private long size;
-    private Hash hash;
-    private ObjectNode metadata;
+    private final PhysicalKey physicalKey;
+    private final long size;
+    private final Hash hash;
+    private final ObjectNode metadata;
 
     public Entry(PhysicalKey physicalKey, long size, Hash hash, ObjectNode metadata) {
         this.physicalKey = physicalKey;

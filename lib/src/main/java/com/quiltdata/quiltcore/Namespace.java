@@ -8,10 +8,10 @@ import com.quiltdata.quiltcore.key.PhysicalKey;
 
 
 public class Namespace {
-    private Registry registry;
-    private String name;
-    private PhysicalKey path;
-    private PhysicalKey versions;
+    private final Registry registry;
+    private final String name;
+    private final PhysicalKey path;
+    private final PhysicalKey versions;
 
     public Namespace(Registry registry, String name, PhysicalKey path, PhysicalKey versions) {
         this.registry = registry;

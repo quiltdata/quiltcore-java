@@ -25,9 +25,9 @@ import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.paginators.ListObjectsV2Iterable;
 
 public class S3PhysicalKey extends PhysicalKey {
-    private String bucket;
-    private String key;
-    private String versionId;
+    private final String bucket;
+    private final String key;
+    private final String versionId;
 
     public S3PhysicalKey(String bucket, String key, String versionId) {
         this.bucket = bucket;
@@ -48,8 +48,8 @@ public class S3PhysicalKey extends PhysicalKey {
 
         bucket = uri.getHost();
         key = uri.getPath().substring(1);  // Remove /
-        versionId = null;
 
+        String versionId = null;
         if (uri.getQuery() != null) {
             for (String nameValuePair : uri.getQuery().split("&")) {
                 String[] parts = nameValuePair.split("=", 2);
@@ -63,6 +63,7 @@ public class S3PhysicalKey extends PhysicalKey {
                 }
             }
         }
+        this.versionId = versionId;
     }
 
     public String getBucket() {

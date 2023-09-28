@@ -11,7 +11,7 @@ import java.util.stream.Stream;
 public class LocalPhysicalKey extends PhysicalKey {
     private static int MAX_DEPTH = 1000;
 
-    private String path;
+    private final String path;
 
     public LocalPhysicalKey(String path) {
         if (!path.startsWith("/")) {

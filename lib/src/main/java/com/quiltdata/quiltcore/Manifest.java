@@ -91,8 +91,8 @@ public class Manifest {
         }
     }
 
-    private SortedMap<String, Entry> entries;
-    private ObjectNode metadata;
+    private final SortedMap<String, Entry> entries;
+    private final ObjectNode metadata;
 
     private Manifest(SortedMap<String, Entry> entries, ObjectNode metadata) {
         this.entries = entries;

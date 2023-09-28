@@ -5,9 +5,9 @@ import com.quiltdata.quiltcore.workflows.ConfigurationException;
 import com.quiltdata.quiltcore.workflows.WorkflowConfig;
 
 public class Registry {
-    private PhysicalKey names;
-    private PhysicalKey versions;
-    private PhysicalKey workflowConfigPath;
+    private final PhysicalKey names;
+    private final PhysicalKey versions;
+    private final PhysicalKey workflowConfigPath;
 
     public Registry(PhysicalKey root) {
         names = root.resolve(".quilt/named_packages");

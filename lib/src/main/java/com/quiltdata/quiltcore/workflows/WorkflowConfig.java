@@ -56,10 +56,10 @@ public class WorkflowConfig {
         }
     }
 
-    private JsonNode config;
-    private PhysicalKey physicalKey;
-    private Map<String, SchemaInfo> loadedSchemas;
-    private Map<String, SchemaInfo> loadedSchemasById;
+    private final JsonNode config;
+    private final PhysicalKey physicalKey;
+    private final Map<String, SchemaInfo> loadedSchemas;
+    private final Map<String, SchemaInfo> loadedSchemasById;
 
     public WorkflowConfig(JsonNode config, PhysicalKey physicalKey) {
         this.config = config;
