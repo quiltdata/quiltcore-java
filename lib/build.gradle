@@ -40,8 +40,18 @@ dependencies {
 // Apply a specific Java toolchain to ease working on different environments.
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(11)
+        languageVersion = JavaLanguageVersion.of(17)
     }
+}
+
+// Enable Java 11 compatibility to support NextFlow.
+tasks {
+    sourceCompatibility = '11'
+    targetCompatibility = '11'
+}
+
+compileJava {
+    options.release.set(11)
 }
 
 test {
