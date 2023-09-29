@@ -2,6 +2,7 @@ package com.quiltdata.quiltcore.workflows;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.NoSuchFileException;
 import java.util.HashMap;
 import java.util.Map;
@@ -158,14 +159,12 @@ public class WorkflowConfig {
             .put("id", workflow.isEmpty() ? null : workflow)
             .put("config", physicalKey.toString());
         if (!loadedSchemasById.isEmpty()) {
-            System.out.println("adding schemas");
             var schemaNode = JsonNodeFactory.instance.objectNode();
             for (var entry : loadedSchemasById.entrySet()) {
                 schemaNode.put(entry.getKey(), entry.getValue().physicalKey.toString());
             }
             dataToStore.set("schemas", schemaNode);
         }
-        System.out.println(dataToStore);
 
         return new WorkflowValidator(dataToStore, isMessageRequired, pkgNamePattern, metadataValidator, entriesValidator);
     }
@@ -229,7 +228,9 @@ public class WorkflowConfig {
         PhysicalKey schemaPk;
         try {
             schemaPk = PhysicalKey.fromUri(new URI(schemaUrl));
-        } catch (Exception e) {
+        } catch (IllegalArgumentException e) {
+            throw new ConfigurationException("Couldn't parse URL: " + schemaUrl, e);
+        } catch (URISyntaxException e) {
             throw new ConfigurationException("Couldn't parse URL: " + schemaUrl, e);
         }
 
