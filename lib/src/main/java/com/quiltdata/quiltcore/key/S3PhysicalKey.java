@@ -36,7 +36,7 @@ public class S3PhysicalKey extends PhysicalKey {
     }
 
     public S3PhysicalKey(URI uri) {
-        if (!uri.getScheme().equals("s3")) {
+        if (uri.getScheme() == null || !uri.getScheme().equals("s3")) {
             throw new IllegalArgumentException("Unexpected URI scheme: " + uri.getScheme());
         }
         if (uri.getHost() == null) {
@@ -44,6 +44,9 @@ public class S3PhysicalKey extends PhysicalKey {
         }
         if (uri.getPort() != -1) {
             throw new IllegalArgumentException("Unexpected port");
+        }
+        if (uri.getPath() == null || !uri.getPath().startsWith("/")) {
+            throw new IllegalArgumentException("Unexpected path: " + uri.getPath());
         }
 
         bucket = uri.getHost();

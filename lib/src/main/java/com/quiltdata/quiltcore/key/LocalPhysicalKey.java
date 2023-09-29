@@ -30,7 +30,7 @@ public class LocalPhysicalKey extends PhysicalKey {
     }
 
     public LocalPhysicalKey(URI uri) {
-        if (!uri.getScheme().equals("file")) {
+        if (uri.getScheme() == null || !uri.getScheme().equals("file")) {
             throw new IllegalArgumentException("Unexpected URI scheme: " + uri.getScheme());
         }
         if (uri.getHost() != null && !uri.getHost().equals("localhost")) {
@@ -38,6 +38,9 @@ public class LocalPhysicalKey extends PhysicalKey {
         }
         if (uri.getPort() != -1) {
             throw new IllegalArgumentException("Unexpected port");
+        }
+        if (uri.getPath() == null || !uri.getPath().startsWith("/")) {
+            throw new IllegalArgumentException("Unexpected path: " + uri.getPath());
         }
         if (uri.getQuery() != null) {
             throw new IllegalArgumentException("Unexpected query");
