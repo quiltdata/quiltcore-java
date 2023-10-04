@@ -42,6 +42,7 @@ import com.quiltdata.quiltcore.workflows.WorkflowValidator;
 
 import software.amazon.awssdk.services.s3.S3AsyncClient;
 import software.amazon.awssdk.services.s3.model.PutObjectResponse;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.transfer.s3.S3TransferManager;
 import software.amazon.awssdk.transfer.s3.model.CompletedFileDownload;
 import software.amazon.awssdk.transfer.s3.model.CompletedFileUpload;
@@ -255,9 +256,13 @@ public class Manifest {
 
         Map<String, List<Map.Entry<String, Entry>>> entriesByBucket =
             entries.entrySet().stream().collect(Collectors.groupingBy(
-                entry -> entry.getValue().getPhysicalKey() instanceof S3PhysicalKey
-                    ? ((S3PhysicalKey)entry.getValue().getPhysicalKey()).getBucket()
-                    : ""
+                ThrowingFunction.sneaky(entry -> {
+                    PhysicalKey pk = entry.getValue().getPhysicalKey();
+                    if (!(pk instanceof S3PhysicalKey)) {
+                        throw new IOException("Expected s3 paths, but got a local path: " + pk);
+                    }
+                    return ((S3PhysicalKey)pk).getBucket();
+                })
             ));
 
         // Ideally, we would parallelize all downloads, but S3TransferManager is per-region.
@@ -267,44 +272,44 @@ public class Manifest {
             String bucket = e.getKey();
             List<Map.Entry<String, Entry>> bucketEntries = e.getValue();
 
-            if (bucket.length() == 0) {
-                // Local files
-                throw new IOException("Expected s3 paths, but got local paths");
-            } else {
-                S3AsyncClient s3 = S3ClientStore.getAsyncClient(bucket);
+            S3AsyncClient s3;
+            try {
+                s3 = S3ClientStore.getAsyncClient(bucket);
+            } catch (S3Exception ex) {
+                throw new IOException("Install failed", ex.getCause());
+            }
 
-                try(
-                    S3TransferManager transferManager =
-                        S3TransferManager.builder()
-                            .s3Client(s3)
+            try(
+                S3TransferManager transferManager =
+                    S3TransferManager.builder()
+                        .s3Client(s3)
+                        .build();
+            ) {
+                List<CompletableFuture<CompletedFileDownload>> futures = new ArrayList<>(bucketEntries.size());
+
+                for (Map.Entry<String, Entry> e2 : bucketEntries) {
+                    String logicalKey = e2.getKey();
+                    Entry entry = e2.getValue();
+                    String key = ((S3PhysicalKey)entry.getPhysicalKey()).getKey();
+
+                    Path entryDest = resolveDest(dest, logicalKey);
+
+                    DownloadFileRequest downloadFileRequest =
+                        DownloadFileRequest.builder()
+                            .getObjectRequest(b -> b.bucket(bucket).key(key))
+                            .addTransferListener(LoggingTransferListener.create())
+                            .destination(entryDest)
                             .build();
-                ) {
-                    List<CompletableFuture<CompletedFileDownload>> futures = new ArrayList<>(bucketEntries.size());
 
-                    for (Map.Entry<String, Entry> e2 : bucketEntries) {
-                        String logicalKey = e2.getKey();
-                        Entry entry = e2.getValue();
-                        String key = ((S3PhysicalKey)entry.getPhysicalKey()).getKey();
-
-                        Path entryDest = resolveDest(dest, logicalKey);
-
-                        DownloadFileRequest downloadFileRequest =
-                            DownloadFileRequest.builder()
-                                .getObjectRequest(b -> b.bucket(bucket).key(key))
-                                .addTransferListener(LoggingTransferListener.create())
-                                .destination(entryDest)
-                                .build();
-
-                        FileDownload downloadFile = transferManager.downloadFile(downloadFileRequest);
-                        futures.add(downloadFile.completionFuture());
-                    }
-
-                    for (CompletableFuture<CompletedFileDownload> future : futures) {
-                        future.join();
-                    }
-                } catch (CompletionException ex) {
-                    throw new IOException("Install failed", ex.getCause());
+                    FileDownload downloadFile = transferManager.downloadFile(downloadFileRequest);
+                    futures.add(downloadFile.completionFuture());
                 }
+
+                for (CompletableFuture<CompletedFileDownload> future : futures) {
+                    future.join();
+                }
+            } catch (CompletionException ex) {
+                throw new IOException("Install failed", ex.getCause());
             }
         }
     }
@@ -333,7 +338,13 @@ public class Manifest {
 
         S3PhysicalKey s3NamespacePath = (S3PhysicalKey)namespacePath;
         String destBucket = s3NamespacePath.getBucket();
-        S3AsyncClient s3 = S3ClientStore.getAsyncClient(destBucket);
+
+        S3AsyncClient s3;
+        try {
+            s3 = S3ClientStore.getAsyncClient(destBucket);
+        } catch (S3Exception ex) {
+            throw new IOException("Push failed", ex.getCause());
+        }
 
         Map<String, Entry> entriesWithHashes = entries.entrySet()
             .stream()
