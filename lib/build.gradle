@@ -10,6 +10,7 @@ plugins {
     // Apply the java-library plugin for API and implementation separation.
     id 'java-library'
     id 'maven-publish'
+    id 'signing'
 }
 
 repositories {
@@ -42,6 +43,8 @@ java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(17)
     }
+    withJavadocJar()
+    withSourcesJar()
 }
 
 // Enable Java 11 compatibility to support NextFlow.
@@ -65,19 +68,67 @@ test {
 publishing {
     publications {
         maven(MavenPublication) {
-            groupId = 'com.quiltdata.quiltcore'
+            groupId = 'com.quiltdata'
             artifactId = 'quiltcore'
-            version = '0.0.5'
+            version = '0.1'
 
             from components.java
-        }
-    }
-    repositories {
-        maven {
-            url "s3://quilt-dima/maven/releases"
-            authentication {
-                awsIm(AwsImAuthentication)
+
+            versionMapping {
+                usage('java-api') {
+                    fromResolutionOf('runtimeClasspath')
+                }
+                usage('java-runtime') {
+                    fromResolutionResult()
+                }
+            }
+
+            pom {
+                name = 'QuiltCore'
+                description = 'Java implementation of the Quilt API'
+                url = 'https://quiltdata.com'
+
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+
+                scm {
+                    connection = 'scm:git:git://github.com/quiltdata/quiltcore-java.git'
+                    developerConnection = 'scm:git:ssh://github.com/quiltdata/quiltcore-java.git'
+                    url = 'https://github.com/quiltdata/quiltcore-java'
+                }
+
+                developers {
+                    developer {
+                        id = 'dima'
+                        name = 'Dima Ryazanov'
+                        email = 'dima@quiltdata.io'
+                    }
+                }
             }
         }
+    }
+
+    repositories {
+        maven {
+            url 'https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/'
+            credentials {
+                username sonatypeUsername
+                password sonatypePassword
+            }
+        }
+    }
+}
+
+signing {
+    sign publishing.publications.maven
+}
+
+javadoc {
+    if(JavaVersion.current().isJava9Compatible()) {
+        options.addBooleanOption('html5', true)
     }
 }
