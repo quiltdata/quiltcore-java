@@ -78,7 +78,7 @@ public class RegistryTest {
     public void testS3Push() throws Exception {
         Path dir = Path.of("src", "test", "resources", "dir").toAbsolutePath();
 
-        PhysicalKey p = PhysicalKey.fromUri(new URI("s3://quilt-dima2/"));
+        PhysicalKey p = PhysicalKey.fromUri(new URI("s3://nf-core-gallery/"));
 
         Registry r = new Registry(p);
         Namespace n = r.getNamespace("dima/java_test");
@@ -97,14 +97,14 @@ public class RegistryTest {
 
         String topHash = m2.calculateTopHash();
 
-        assertEquals("97ea1254aab77d28e0f459a739351879b46e6e6142efdab327abf6ab6bdf72dd", topHash);
+        assertEquals("a1ce1401243ba193d65eb5760aea0120df2a5739c137a1349ffeaec67a19b64f", topHash);
     }
 
     @Test
     public void testS3PushErrors() throws Exception {
         Path dir = Path.of("src", "test", "resources", "dir").toAbsolutePath();
 
-        PhysicalKey p = PhysicalKey.fromUri(new URI("s3://quilt-dima2/"));
+        PhysicalKey p = PhysicalKey.fromUri(new URI("s3://nf-core-gallery/"));
 
         Registry r = new Registry(p);
         Namespace n = r.getNamespace("dima/java_test");
@@ -122,10 +122,10 @@ public class RegistryTest {
     public void testS3WorkflowPush() throws Exception {
         Path dir = Path.of("src", "test", "resources", "dir").toAbsolutePath();
 
-        PhysicalKey p = PhysicalKey.fromUri(new URI("s3://quilt-dima2/"));
+        PhysicalKey p = PhysicalKey.fromUri(new URI("s3://nf-core-gallery/"));
 
         Registry r = new Registry(p);
-        Namespace n = r.getNamespace("dima/java_workflow_test");
+        Namespace n = r.getNamespace("test/java_workflow_test");
 
         Path foo = dir.resolve("foo.txt");
 
