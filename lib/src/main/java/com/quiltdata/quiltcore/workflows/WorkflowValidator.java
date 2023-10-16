@@ -48,7 +48,7 @@ public class WorkflowValidator {
         if (pkgNamePattern != null) {
             Matcher m = pkgNamePattern.matcher(name);
             if (!m.find()) {
-                throw new WorkflowException("Package name doesn't match required pattern");
+                throw new WorkflowException("Package name " + name + " doesn't match required pattern");
             }
         }
     }
