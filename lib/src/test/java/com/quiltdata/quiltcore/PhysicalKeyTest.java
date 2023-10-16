@@ -24,7 +24,7 @@ public class PhysicalKeyTest {
 
     @Test
     public void testS3Uris() throws Exception {
-        String uri = "s3://bucket/foo/a+b%20c?versionId=a%2Fb";
+        String uri = "s3://bucket/foo/a+b%20c?versionId=a%252Fb";
         S3PhysicalKey pk = new S3PhysicalKey(new URI(uri));
 
         assertEquals("bucket", pk.getBucket());
