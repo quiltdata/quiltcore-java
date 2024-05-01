@@ -1,2 +1,21 @@
 # quiltcore-java
+
 Java implementation of the Quilt API
+
+## Publishing
+
+This project is published to Maven Central using the Portal Publisher API. You need to:
+
+1. Get username/password credentials (not a SSO login) to the new Central Portal (not the old Nexus one)
+2. Store them in your `~/.gradle/gradle.properties` file like this:
+
+```sh
+sonatypeUsername=yourusername
+sonatypePassword=yourpassword
+```
+
+Then you can publish the project by running:
+
+```sh
+./gradlew sonatypeCentralUpload
+```
