@@ -101,3 +101,5 @@ javadoc {
         options.addBooleanOption('html5', true)
     }
 }
+
+// tasks.named("generateMetadataFileForMavenPublication").configure { dependsOn("plainJavadocJar") }
