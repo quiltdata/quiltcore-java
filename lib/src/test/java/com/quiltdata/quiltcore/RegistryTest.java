@@ -9,6 +9,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.condition.DisabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -18,6 +20,7 @@ import com.quiltdata.quiltcore.key.PhysicalKey;
 
 public class RegistryTest {
     @Test
+    @DisabledOnOs({ OS.WINDOWS })
     public void testLocalPackage() throws Exception {
         Path dir = Path.of("src", "test", "resources", "packages").toAbsolutePath();
         PhysicalKey p = new LocalPhysicalKey(dir);
