@@ -2,6 +2,12 @@
 
 Java implementation of the Quilt Packaging API
 
+## Testing
+
+```sh
+./gradlew check || open lib/build/reports/tests/test/index.html
+```
+
 ## Publishing
 
 This project is published to Maven Central using the Portal Publisher API. You need to:
