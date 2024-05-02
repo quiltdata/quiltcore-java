@@ -29,7 +29,7 @@ dependencies {
     implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.15.2'
 
     // JSON Schema validator.
-    implementation 'io.vertx:vertx-json-schema:4.4.4'
+    implementation 'io.vertx:vertx-json-schema:4.5.7'
 
     // Workarounds for Java's checked exceptions.
     implementation 'com.pivovarit:throwing-function:1.5.1'
