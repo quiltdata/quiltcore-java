@@ -20,8 +20,8 @@ repositories {
 
 dependencies {
     // AWS SDK
-    implementation 'software.amazon.awssdk:s3:2.20.102'
-    implementation 'software.amazon.awssdk:s3-transfer-manager:2.20.102'
+    implementation 'software.amazon.awssdk:s3:2.25.43'
+    implementation 'software.amazon.awssdk:s3-transfer-manager:2.25.43'
     implementation 'software.amazon.awssdk.crt:aws-crt:0.29.18'
 
     // JSON and YAML parsing.
