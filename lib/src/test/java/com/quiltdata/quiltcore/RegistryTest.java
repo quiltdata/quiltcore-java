@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.rmi.registry.Registry;
 
 import javax.xml.stream.events.Namespace;
+import spock.lang.IgnoreIf;
 
 import static org.junit.jupiter.api.Assertions.*;
 

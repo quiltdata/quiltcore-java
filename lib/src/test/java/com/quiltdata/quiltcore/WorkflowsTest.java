@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
+import spock.lang.IgnoreIf;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
