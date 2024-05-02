@@ -20,8 +20,8 @@ repositories {
 
 dependencies {
     // AWS SDK
-    implementation 'software.amazon.awssdk:s3:2.20.102'
-    implementation 'software.amazon.awssdk:s3-transfer-manager:2.20.102'
+    implementation 'software.amazon.awssdk:s3:2.25.43'
+    implementation 'software.amazon.awssdk:s3-transfer-manager:2.25.43'
     implementation 'software.amazon.awssdk.crt:aws-crt:0.29.18'
 
     // JSON and YAML parsing.
@@ -35,7 +35,7 @@ dependencies {
     implementation 'com.pivovarit:throwing-function:1.5.1'
 
     // Use JUnit test framework.
-    testImplementation('org.junit.jupiter:junit-jupiter:5.10.0')
+    testImplementation('org.junit.jupiter:junit-jupiter:5.10.2')
 }
 
 // Apply a specific Java toolchain to ease working on different environments.
