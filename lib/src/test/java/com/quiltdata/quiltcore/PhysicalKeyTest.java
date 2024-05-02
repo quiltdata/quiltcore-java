@@ -7,7 +7,8 @@ import java.util.Arrays;
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
-import spock.lang.IgnoreIf;
+import org.junit.jupiter.api.condition.DisabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 
 import com.quiltdata.quiltcore.key.LocalPhysicalKey;
 import com.quiltdata.quiltcore.key.S3PhysicalKey;
@@ -38,7 +39,7 @@ public class PhysicalKeyTest {
     }
 
     @Test
-    @IgnoreIf({System.getProperty("os.name").contains("indows")})
+    @DisabledOnOs({ OS.WINDOWS })
     public void testLocalList() throws Exception {
         Path dir = Path.of("src", "test", "resources", "dir");
         LocalPhysicalKey pk = new LocalPhysicalKey(dir.toAbsolutePath().toString());

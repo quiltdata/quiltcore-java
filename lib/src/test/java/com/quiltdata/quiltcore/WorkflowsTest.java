@@ -6,7 +6,8 @@ import java.nio.file.Path;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
-import spock.lang.IgnoreIf;
+import org.junit.jupiter.api.condition.DisabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -33,7 +34,7 @@ public class WorkflowsTest {
     }
 
     @Test
-    @IgnoreIf({ System.getProperty("os.name").contains("indows") })
+    @DisabledOnOs({OS.WINDOWS})
     public void testWorkflows() throws Exception {
         Path path = Path.of("src", "test", "resources", "config.yml").toAbsolutePath();
         PhysicalKey key = new LocalPhysicalKey(path);

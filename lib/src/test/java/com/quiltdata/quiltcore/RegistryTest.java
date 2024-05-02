@@ -4,15 +4,13 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.rmi.registry.Registry;
-
-import javax.xml.stream.events.Namespace;
-import spock.lang.IgnoreIf;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.condition.DisabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -22,7 +20,7 @@ import com.quiltdata.quiltcore.key.PhysicalKey;
 
 public class RegistryTest {
     @Test
-    @IgnoreIf({System.getProperty("os.name").contains("indows")})
+    @DisabledOnOs({ OS.WINDOWS })
     public void testLocalPackage() throws Exception {
         Path dir = Path.of("src", "test", "resources", "packages").toAbsolutePath();
         PhysicalKey p = new LocalPhysicalKey(dir);
