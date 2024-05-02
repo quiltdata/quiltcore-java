@@ -30,7 +30,7 @@ public class PhysicalKeyTest {
 
         assertEquals("bucket", pk.getBucket());
         assertEquals("foo/a+b c", pk.getKey());
-        assertEquals("a.b", pk.getVersionId());
+        assertEquals("a_b", pk.getVersionId());
         System.out.println("testS3Uris.pk: " + pk.toUri().toString());
 
         assertEquals(uri, pk.toUri().toString());  // Breaks for %2f in VersionID
