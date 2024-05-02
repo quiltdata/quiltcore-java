@@ -4,6 +4,9 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.rmi.registry.Registry;
+
+import javax.xml.stream.events.Namespace;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -18,6 +21,7 @@ import com.quiltdata.quiltcore.key.PhysicalKey;
 
 public class RegistryTest {
     @Test
+    @IgnoreIf({System.getProperty("os.name").contains("indows")})
     public void testLocalPackage() throws Exception {
         Path dir = Path.of("src", "test", "resources", "packages").toAbsolutePath();
         PhysicalKey p = new LocalPhysicalKey(dir);

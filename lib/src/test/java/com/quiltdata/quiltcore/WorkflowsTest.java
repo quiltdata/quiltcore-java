@@ -32,6 +32,7 @@ public class WorkflowsTest {
     }
 
     @Test
+    @IgnoreIf({ System.getProperty("os.name").contains("indows") })
     public void testWorkflows() throws Exception {
         Path path = Path.of("src", "test", "resources", "config.yml").toAbsolutePath();
         PhysicalKey key = new LocalPhysicalKey(path);

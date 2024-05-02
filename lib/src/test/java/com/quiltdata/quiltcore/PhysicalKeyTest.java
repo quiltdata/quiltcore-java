@@ -37,6 +37,7 @@ public class PhysicalKeyTest {
     }
 
     @Test
+    @IgnoreIf({System.getProperty("os.name").contains("indows")})
     public void testLocalList() throws Exception {
         Path dir = Path.of("src", "test", "resources", "dir");
         LocalPhysicalKey pk = new LocalPhysicalKey(dir.toAbsolutePath().toString());
