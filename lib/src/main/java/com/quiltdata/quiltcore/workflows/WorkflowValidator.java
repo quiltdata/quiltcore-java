@@ -13,11 +13,16 @@ import com.quiltdata.quiltcore.Entry;
 
 import io.vertx.json.schema.OutputUnit;
 import io.vertx.json.schema.Validator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * This class represents a WorkflowValidator.
  * It is responsible for validating workflows.
  */
 public class WorkflowValidator {
+    private static final Logger logger = LoggerFactory.getLogger(WorkflowValidator.class);
+
     /**
      * The data to store.
      */
@@ -120,6 +125,7 @@ public class WorkflowValidator {
      * @return The entry for validation.
      */
     private static Map<String, Object> entryForValidation(ObjectMapper mapper, String logicalKey, Entry entry) {
+        logger.debug("entryForValidation: logicalKey={}, entry={}", logicalKey, entry);
         try {
             return Map.of(
                 "logical_key", logicalKey,
@@ -169,6 +175,7 @@ public class WorkflowValidator {
 
         JsonNode userMeta = metadata.get("user_meta");
 
+        logger.debug("validateMetadata: userMeta={}", userMeta);
         try {
             OutputUnit output = metadataValidator.validate(mapper.treeToValue(userMeta, Object.class));
             if (!output.getValid()) {

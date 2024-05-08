@@ -21,16 +21,13 @@ import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.stream.Collectors;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import com.pivovarit.function.ThrowingFunction;
-
 import com.quiltdata.quiltcore.key.LocalPhysicalKey;
 import com.quiltdata.quiltcore.key.PhysicalKey;
 import com.quiltdata.quiltcore.key.S3PhysicalKey;
@@ -39,7 +36,6 @@ import com.quiltdata.quiltcore.workflows.ConfigurationException;
 import com.quiltdata.quiltcore.workflows.WorkflowConfig;
 import com.quiltdata.quiltcore.workflows.WorkflowException;
 import com.quiltdata.quiltcore.workflows.WorkflowValidator;
-
 import software.amazon.awssdk.services.s3.S3AsyncClient;
 import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 import software.amazon.awssdk.services.s3.model.S3Exception;
@@ -52,7 +48,6 @@ import software.amazon.awssdk.transfer.s3.model.FileUpload;
 import software.amazon.awssdk.transfer.s3.model.UploadFileRequest;
 import software.amazon.awssdk.transfer.s3.progress.LoggingTransferListener;
 import software.amazon.awssdk.utils.BinaryUtils;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -253,6 +248,8 @@ public class Manifest {
      */
     public String calculateTopHash() throws IOException {
         MessageDigest digest;
+
+        logger.debug("Calculating top hash for manifest with {} entries", entries.size());
         try {
             digest = MessageDigest.getInstance("SHA-256");
         } catch (NoSuchAlgorithmException e) {
@@ -351,12 +348,14 @@ public class Manifest {
             List<Map.Entry<String, Entry>> bucketEntries = e.getValue();
 
             S3AsyncClient s3;
+            logger.debug("Creating S3 client for bucket: {}", bucket);
             try {
                 s3 = S3ClientStore.getAsyncClient(bucket);
             } catch (S3Exception ex) {
                 throw new IOException("Install failed", ex.getCause());
             }
 
+            logger.debug("Building transfer manager for bucket: {}", bucket);
             try(
                 S3TransferManager transferManager =
                     S3TransferManager.builder()
@@ -372,6 +371,7 @@ public class Manifest {
 
                     Path entryDest = resolveDest(dest, logicalKey);
 
+                    logger.debug("Downloading file from bucket: {}, key: {}", bucket, key);
                     DownloadFileRequest downloadFileRequest =
                         DownloadFileRequest.builder()
                             .getObjectRequest(b -> b.bucket(bucket).key(key))
@@ -429,6 +429,7 @@ public class Manifest {
         String destBucket = s3NamespacePath.getBucket();
 
         S3AsyncClient s3;
+        logger.debug("Creating S3 client for bucket: {}", destBucket);
         try {
             s3 = S3ClientStore.getAsyncClient(destBucket);
         } catch (S3Exception ex) {
@@ -451,6 +452,7 @@ public class Manifest {
         }
         builder.setMetadata(newMetadata);
 
+        logger.debug("Building transfer manager for bucket: {}", destBucket);
         try(
             S3TransferManager transferManager =
                 S3TransferManager.builder()
@@ -472,12 +474,18 @@ public class Manifest {
                 }
                 LocalPhysicalKey localSrc = (LocalPhysicalKey)src;
 
+                Path sourcePath = Path.of(localSrc.getPath());
+                if (!Files.exists(sourcePath)) {
+                    throw new IOException("Source file does not exist: " + sourcePath);
+                }
+
                 UploadFileRequest uploadFileRequest = UploadFileRequest.builder()
                     .putObjectRequest(req -> req.bucket(destBucket).key(destPath))
                     .addTransferListener(LoggingTransferListener.create())
-                    .source(Path.of(localSrc.getPath()))
+                    .source(sourcePath)
                     .build();
 
+                logger.debug("Uploading file to bucket: {}, key: {}", destBucket, destPath);
                 FileUpload uploadFile = transferManager.uploadFile(uploadFileRequest);
                 futures.add(Map.entry(logicalKey, uploadFile.completionFuture()));
             }

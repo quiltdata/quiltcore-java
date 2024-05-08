@@ -20,7 +20,8 @@ import io.vertx.json.schema.JsonSchema;
 import io.vertx.json.schema.JsonSchemaOptions;
 import io.vertx.json.schema.OutputUnit;
 import io.vertx.json.schema.Validator;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Represents the configuration for workflows in Quilt.
@@ -31,6 +32,8 @@ public class WorkflowConfig {
      */
     public static final ConfigDataVersion CONFIG_DATA_VERSION = new ConfigDataVersion(1, 1, 0);
 
+    private static final Logger logger = LoggerFactory.getLogger(WorkflowConfig.class);
+
     private static final Map<String, Draft> SUPPORTED_META_SCHEMAS = Map.of(
         "http://json-schema.org/draft-07/schema#", Draft.DRAFT7
     );
@@ -38,6 +41,7 @@ public class WorkflowConfig {
     private static final Validator configValidator;
 
     static {
+        logger.info("Loading WorkflowConfig schema");
         try {
             byte[] bytes = WorkflowConfig.class.getResourceAsStream("/config-1.schema.json").readAllBytes();
             JsonObject obj = new JsonObject(new String(bytes));
@@ -90,6 +94,8 @@ public class WorkflowConfig {
     public static WorkflowConfig load(PhysicalKey physicalKey) throws ConfigurationException {
         byte[] data;
         PhysicalKey effectivePhysicalKey;
+
+        logger.debug("Loading workflows config from {}", physicalKey);
         try {
             var response = physicalKey.open();
             data = response.inputStream.readAllBytes();
@@ -106,6 +112,8 @@ public class WorkflowConfig {
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
         JsonNode node;
         Object value;
+
+        logger.debug("Parsing workflows config from {}", data);
         try {
             node = mapper.readTree(data);
             value = mapper.treeToValue(node, Object.class);
@@ -216,6 +224,8 @@ public class WorkflowConfig {
         ObjectMapper mapper = new ObjectMapper();
         JsonNode schemaNode;
         PhysicalKey schemaEffectivePhysicalKey;
+
+        logger.debug("Loading schema from {}", schemaPhysicalKey);
         try {
             var response = schemaPhysicalKey.open();
             schemaNode = mapper.readTree(response.inputStream);
@@ -257,6 +267,8 @@ public class WorkflowConfig {
         }
         String schemaUrl = schema.get("url").asText();
         PhysicalKey schemaPk;
+
+        logger.debug("Resolving schema URL: {}", schemaUrl);
         try {
             schemaPk = PhysicalKey.fromUri(new URI(schemaUrl));
         } catch (IllegalArgumentException e) {

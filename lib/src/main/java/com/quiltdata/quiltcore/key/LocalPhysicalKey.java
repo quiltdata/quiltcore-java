@@ -7,16 +7,20 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.stream.Stream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Represents a local physical key that is used to access files on the local file system.
  * This class extends the abstract class PhysicalKey.
  */
 public class LocalPhysicalKey extends PhysicalKey {
+    private static final Logger logger = LoggerFactory.getLogger(LocalPhysicalKey.class);
 
     private static int MAX_DEPTH = 1000;
 
     private final String path;
+
 
     /**
      * Constructs a LocalPhysicalKey with the specified path.
@@ -89,6 +93,7 @@ public class LocalPhysicalKey extends PhysicalKey {
      */
     @Override
     public OpenResponse open() throws IOException {
+        logger.debug("Opening file: {}", path);
         return new OpenResponse(getInputStream(), this);
     }
 
@@ -100,6 +105,7 @@ public class LocalPhysicalKey extends PhysicalKey {
      */
     @Override
     public InputStream getInputStream() throws IOException {
+        logger.debug("Reading file: {}", path);
         Path p = Path.of(path);
         return Files.newInputStream(p);
     }
@@ -112,6 +118,7 @@ public class LocalPhysicalKey extends PhysicalKey {
      */
     @Override
     public void putBytes(byte[] bytes) throws IOException {
+        logger.debug("Writing file: {}", path);
         Path p = Path.of(path);
         Files.write(p, bytes);
     }
@@ -150,6 +157,7 @@ public class LocalPhysicalKey extends PhysicalKey {
      */
     @Override
     public Stream<String> listRecursively() throws IOException {
+        logger.debug("Listing files recursively: {}", path);
         Path pathObj = Path.of(path);
 
         return Files.find(

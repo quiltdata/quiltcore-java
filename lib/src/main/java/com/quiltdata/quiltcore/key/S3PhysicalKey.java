@@ -21,11 +21,15 @@ import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.paginators.ListObjectsV2Iterable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Represents a physical key for an object stored in Amazon S3.
  */
 public class S3PhysicalKey extends PhysicalKey {
+    private static final Logger logger = LoggerFactory.getLogger(S3PhysicalKey.class);
+
     private final String bucket;
     private final String key;
     private final String versionId;
@@ -133,6 +137,7 @@ public class S3PhysicalKey extends PhysicalKey {
             .versionId(versionId)
             .build();
 
+        logger.debug("Reading S3 object: {}", objectRequest);
         try {
             return s3.getObject(objectRequest);
         } catch (NoSuchKeyException e) {

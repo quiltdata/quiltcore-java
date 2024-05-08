@@ -9,11 +9,15 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3AsyncClient;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.S3Exception;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class represents a store for S3 clients and provides methods to retrieve S3 clients based on bucket names.
  */
 public class S3ClientStore {
+    
+    private static final Logger logger = LoggerFactory.getLogger(S3ClientStore.class);
     private static final S3Client LOCATION_CLIENT = createClient(Region.US_EAST_1);
 
     private static Map<String, Region> regionMap = Collections.synchronizedMap(new HashMap<>());
@@ -54,6 +58,7 @@ public class S3ClientStore {
 
     private static Region findBucketRegion(String bucket) {
         SdkHttpResponse response;
+        logger.debug("Finding region for bucket: {}", bucket);
         try {
             response = LOCATION_CLIENT.headBucket(builder -> builder.bucket(bucket)).sdkHttpResponse();
         } catch (S3Exception e) {

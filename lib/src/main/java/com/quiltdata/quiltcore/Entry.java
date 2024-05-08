@@ -22,7 +22,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.quiltdata.quiltcore.key.PhysicalKey;
 
 import software.amazon.awssdk.utils.BinaryUtils;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Represents an entry in the Quilt data repository.
@@ -32,6 +33,8 @@ import software.amazon.awssdk.utils.BinaryUtils;
  * Represents an entry in the Quilt dataset.
  */
 public class Entry {
+    private static final Logger logger = LoggerFactory.getLogger(Entry.class);
+
     /**
      * Enumerates the types of hash algorithms supported by Quilt.
      */
@@ -147,6 +150,7 @@ public class Entry {
         }
 
         MessageDigest digest;
+        logger.debug("Calculating hash for entry: {}", physicalKey);
         try {
             digest = MessageDigest.getInstance("SHA-256");
         } catch (NoSuchAlgorithmException e) {
@@ -155,6 +159,7 @@ public class Entry {
             throw new RuntimeException(e);
         }
 
+        logger.debug("Reading entry: {}", physicalKey);
         try (InputStream in = physicalKey.getInputStream()) {
             byte[] buffer = new byte[4096];
             int count;
