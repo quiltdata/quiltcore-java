@@ -9,9 +9,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.NoSuchFileException;
 import java.util.stream.Stream;
-
 import com.quiltdata.quiltcore.S3ClientStore;
-
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -23,18 +21,39 @@ import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.paginators.ListObjectsV2Iterable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+/**
+ * Represents a physical key for an object stored in Amazon S3.
+ */
 public class S3PhysicalKey extends PhysicalKey {
+    private static final Logger logger = LoggerFactory.getLogger(S3PhysicalKey.class);
+
     private final String bucket;
     private final String key;
     private final String versionId;
 
+    /**
+     * Constructs an S3PhysicalKey with the specified bucket, key, and version ID.
+     *
+     * @param bucket    the name of the S3 bucket
+     * @param key       the key of the object within the bucket
+     * @param versionId the version ID of the object (optional)
+     */
     public S3PhysicalKey(String bucket, String key, String versionId) {
+        logger.debug("Creating S3PhysicalKey: bucket={}, key={}, versionId={}", bucket, key, versionId);
         this.bucket = bucket;
         this.key = key;
         this.versionId = versionId;
     }
 
+    /**
+     * Constructs an S3PhysicalKey from the specified URI.
+     *
+     * @param uri the URI representing the S3 object
+     * @throws IllegalArgumentException if the URI has an unexpected scheme, missing bucket, unexpected port, or unexpected path
+     */
     public S3PhysicalKey(URI uri) {
         if (uri.getScheme() == null || !uri.getScheme().equals("s3")) {
             throw new IllegalArgumentException("Unexpected URI scheme: " + uri.getScheme());
@@ -69,14 +88,29 @@ public class S3PhysicalKey extends PhysicalKey {
         this.versionId = versionId;
     }
 
+    /**
+     * Returns the name of the S3 bucket.
+     *
+     * @return the bucket name
+     */
     public String getBucket() {
         return bucket;
     }
 
+    /**
+     * Returns the key of the object within the bucket.
+     *
+     * @return the object key
+     */
     public String getKey() {
         return key;
     }
 
+    /**
+     * Returns the version ID of the object.
+     *
+     * @return the version ID
+     */
     public String getVersionId() {
         return versionId;
     }
@@ -104,6 +138,7 @@ public class S3PhysicalKey extends PhysicalKey {
             .versionId(versionId)
             .build();
 
+        logger.debug("Reading S3 object: {}", objectRequest);
         try {
             return s3.getObject(objectRequest);
         } catch (NoSuchKeyException e) {
@@ -114,6 +149,12 @@ public class S3PhysicalKey extends PhysicalKey {
         }
     }
 
+    /**
+     * Opens the S3 object for reading.
+     *
+     * @return an OpenResponse object containing the input stream and a new S3PhysicalKey with the effective version ID
+     * @throws IOException if an I/O error occurs
+     */
     @Override
     public OpenResponse open() throws IOException {
         var inputStream = getObject();
@@ -121,11 +162,23 @@ public class S3PhysicalKey extends PhysicalKey {
         return new OpenResponse(inputStream, new S3PhysicalKey(bucket, key, effectiveVersionId));
     }
 
+    /**
+     * Returns an input stream for reading the S3 object.
+     *
+     * @return the input stream
+     * @throws IOException if an I/O error occurs
+     */
     @Override
     public InputStream getInputStream() throws IOException {
         return getObject();
     }
 
+    /**
+     * Uploads the specified bytes to the S3 object.
+     *
+     * @param bytes the bytes to upload
+     * @throws IOException if an I/O error occurs
+     */
     @Override
     public void putBytes(byte[] bytes) throws IOException {
         S3Client s3 = getClient();
@@ -138,6 +191,12 @@ public class S3PhysicalKey extends PhysicalKey {
         s3.putObject(objectRequest, RequestBody.fromBytes(bytes));
     }
 
+    /**
+     * Resolves the specified child path relative to the current S3PhysicalKey.
+     *
+     * @param child the child path to resolve
+     * @return a new S3PhysicalKey representing the resolved path
+     */
     @Override
     public PhysicalKey resolve(String child) {
         if (versionId != null) {
@@ -146,6 +205,11 @@ public class S3PhysicalKey extends PhysicalKey {
         return new S3PhysicalKey(bucket, joinPaths(key, child), null);
     }
 
+    /**
+     * Returns the URI representation of the S3PhysicalKey.
+     *
+     * @return the URI
+     */
     @Override
     public URI toUri() {
         String query = versionId == null ? null : "versionId=" + URLEncoder.encode(versionId, StandardCharsets.UTF_8);
@@ -156,6 +220,12 @@ public class S3PhysicalKey extends PhysicalKey {
         }
     }
 
+    /**
+     * Lists all objects recursively under the S3PhysicalKey.
+     *
+     * @return a stream of object keys
+     * @throws IOException if an I/O error occurs
+     */
     @Override
     public Stream<String> listRecursively() throws IOException {
         S3Client s3 = getClient();

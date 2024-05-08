@@ -7,7 +7,6 @@ import java.nio.file.NoSuchFileException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
-
 import com.fasterxml.jackson.core.exc.StreamReadException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -15,16 +14,25 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.quiltdata.quiltcore.key.LocalPhysicalKey;
 import com.quiltdata.quiltcore.key.PhysicalKey;
-
 import io.vertx.core.json.JsonObject;
 import io.vertx.json.schema.Draft;
 import io.vertx.json.schema.JsonSchema;
 import io.vertx.json.schema.JsonSchemaOptions;
 import io.vertx.json.schema.OutputUnit;
 import io.vertx.json.schema.Validator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+/**
+ * Represents the configuration for workflows in Quilt.
+ */
 public class WorkflowConfig {
+    /**
+     * The version of the configuration data.
+     */
     public static final ConfigDataVersion CONFIG_DATA_VERSION = new ConfigDataVersion(1, 1, 0);
+
+    private static final Logger logger = LoggerFactory.getLogger(WorkflowConfig.class);
 
     private static final Map<String, Draft> SUPPORTED_META_SCHEMAS = Map.of(
         "http://json-schema.org/draft-07/schema#", Draft.DRAFT7
@@ -33,6 +41,7 @@ public class WorkflowConfig {
     private static final Validator configValidator;
 
     static {
+        logger.info("Loading WorkflowConfig schema");
         try {
             byte[] bytes = WorkflowConfig.class.getResourceAsStream("/config-1.schema.json").readAllBytes();
             JsonObject obj = new JsonObject(new String(bytes));
@@ -62,6 +71,12 @@ public class WorkflowConfig {
     private final Map<String, SchemaInfo> loadedSchemas;
     private final Map<String, SchemaInfo> loadedSchemasById;
 
+    /**
+     * Constructs a new WorkflowConfig instance.
+     *
+     * @param config The JSON configuration node.
+     * @param physicalKey The physical key associated with the configuration.
+     */
     public WorkflowConfig(JsonNode config, PhysicalKey physicalKey) {
         this.config = config;
         this.physicalKey = physicalKey;
@@ -69,9 +84,18 @@ public class WorkflowConfig {
         loadedSchemasById = new HashMap<>();
     }
 
+    /**
+     * Loads the WorkflowConfig from the specified physical key.
+     *
+     * @param physicalKey The physical key to load the configuration from.
+     * @return The loaded WorkflowConfig instance, or null if the configuration is not found.
+     * @throws ConfigurationException If there is an error loading or parsing the configuration.
+     */
     public static WorkflowConfig load(PhysicalKey physicalKey) throws ConfigurationException {
         byte[] data;
         PhysicalKey effectivePhysicalKey;
+
+        logger.debug("Loading workflows config from {}", physicalKey);
         try {
             var response = physicalKey.open();
             data = response.inputStream.readAllBytes();
@@ -88,6 +112,8 @@ public class WorkflowConfig {
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
         JsonNode node;
         Object value;
+
+        logger.debug("Parsing workflows config from {}", data);
         try {
             node = mapper.readTree(data);
             value = mapper.treeToValue(node, Object.class);
@@ -118,11 +144,24 @@ public class WorkflowConfig {
         }
     }
 
+    /**
+     * Gets the default workflow specified in the configuration.
+     *
+     * @return The default workflow, or an empty string if not specified.
+     */
     public String getDefaultWorkflow() {
         JsonNode node = config.get("default_workflow");
         return node == null ? "" : node.asText();
     }
 
+    /**
+     * Gets the WorkflowValidator for the specified workflow.
+     *
+     * @param workflow The name of the workflow. If null, the default workflow will be used.
+     * @return The WorkflowValidator instance.
+     * @throws WorkflowException If there is an error with the workflow.
+     * @throws ConfigurationException If there is an error with the configuration.
+     */
     public WorkflowValidator getWorkflowValidator(String workflow) throws WorkflowException, ConfigurationException {
         JsonNode workflowData;
 
@@ -185,6 +224,8 @@ public class WorkflowConfig {
         ObjectMapper mapper = new ObjectMapper();
         JsonNode schemaNode;
         PhysicalKey schemaEffectivePhysicalKey;
+
+        logger.debug("Loading schema from {}", schemaPhysicalKey);
         try {
             var response = schemaPhysicalKey.open();
             schemaNode = mapper.readTree(response.inputStream);
@@ -226,6 +267,8 @@ public class WorkflowConfig {
         }
         String schemaUrl = schema.get("url").asText();
         PhysicalKey schemaPk;
+
+        logger.debug("Resolving schema URL: {}", schemaUrl);
         try {
             schemaPk = PhysicalKey.fromUri(new URI(schemaUrl));
         } catch (IllegalArgumentException e) {
