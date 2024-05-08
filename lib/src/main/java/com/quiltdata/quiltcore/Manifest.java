@@ -56,7 +56,14 @@ import software.amazon.awssdk.utils.BinaryUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * The Manifest class represents a collection of entries and metadata associated with a dataset.
+ * It provides methods for building, reading, and serializing manifests.
+ */
 public class Manifest {
+    /**
+     * The version of the manifest.
+     */
     public static final String VERSION = "v0";
 
     private static final ObjectMapper TOP_HASH_MAPPER;
@@ -71,23 +78,46 @@ public class Manifest {
         TOP_HASH_MAPPER.enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS);
     }
 
+    /**
+     * Represents a builder for creating a {@link Manifest} object.
+     */
     public static class Builder {
         private SortedMap<String, Entry> entries;
         private ObjectNode metadata;
 
+        /**
+         * Constructs a new instance of the {@code Builder} class.
+         * Initializes the entries map and sets the metadata to null.
+         */
         public Builder() {
             entries = new TreeMap<>();
             metadata = null;
         }
 
+        /**
+         * Sets the metadata for the manifest.
+         *
+         * @param metadata The metadata to set.
+         */
         public void setMetadata(ObjectNode metadata) {
             this.metadata = metadata;
         }
 
+        /**
+         * Adds an entry to the manifest.
+         *
+         * @param key   The key of the entry.
+         * @param entry The entry to add.
+         */
         public void addEntry(String key, Entry entry) {
             entries.put(key, entry);
         }
 
+        /**
+         * Builds a {@link Manifest} object using the provided entries and metadata.
+         *
+         * @return The built {@link Manifest} object.
+         */
         public Manifest build() {
             logger.debug("Building manifest with {} entries", entries.size());
             return new Manifest(
@@ -105,10 +135,23 @@ public class Manifest {
         this.metadata = metadata;
     }
 
+    /**
+     * Returns a {@link Builder} class for creating instances of the Manifest class.
+     * 
+     * @return A new instance of the {@link Builder} class.
+     */
     public static Builder builder() {
         return new Builder();
     }
 
+    /**
+     * Creates a {@link Manifest} object from a file.
+     * 
+     * @param path The path to the file to create the manifest from.
+     * @return The created {@link Manifest} object.
+     * @throws IOException If an I/O error occurs.
+     * @throws URISyntaxException If the URI is invalid.
+     */
     public static Manifest createFromFile(PhysicalKey path) throws IOException, URISyntaxException {
         Builder builder = builder();
 
@@ -161,6 +204,12 @@ public class Manifest {
         return builder.build();
     }
 
+    /**
+     * Serializes the manifest to an output stream.
+     * 
+     * @param out The output stream to serialize the manifest to.
+     * @throws IOException If an I/O error occurs.
+     */
     public void serializeToOutputStream(OutputStream out) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
 
@@ -196,6 +245,12 @@ public class Manifest {
         }
     }
 
+    /**
+     * Calculates the top hash of the manifest.
+     * 
+     * @return The top hash of the manifest.
+     * @throws IOException If an I/O error occurs.
+     */
     public String calculateTopHash() throws IOException {
         MessageDigest digest;
         try {
@@ -242,10 +297,19 @@ public class Manifest {
         return BinaryUtils.toHex(digest.digest());
     }
 
+    /** 
+     * Returns the entries in the manifest.
+     * 
+     * @return The entries in the manifest.
+     */
     public SortedMap<String, Entry> getEntries() {
         return entries;
     }
 
+    /**
+     * Returns the metadata in the manifest.
+     * @return {@link ObjectNode}
+     */
     public ObjectNode getMetadata() {
         return metadata.deepCopy();
     }
@@ -259,6 +323,12 @@ public class Manifest {
         return entryDest;
     }
 
+    /**
+     * Installs the manifest to the specified destination.
+     * 
+     * @param dest The destination to install the manifest to.
+     * @throws IOException If an I/O error occurs.
+     */
     public void install(Path dest) throws IOException {
         // TODO: save the manifest to the local registry?
 
@@ -336,6 +406,17 @@ public class Manifest {
         return validator.getDataToStore();
     }
 
+    /**
+     * Pushes the manifest to the specified namespace.
+     * 
+     * @param namespace The namespace to push the manifest to.
+     * @param message The message to associate with the push.
+     * @param workflow The workflow to run on the pushed data.
+     * @return The pushed {@link Manifest}
+     * @throws IOException If an I/O error occurs.
+     * @throws ConfigurationException If a configuration error occurs.
+     * @throws WorkflowException If a workflow error occurs.
+     */
     public Manifest push(Namespace namespace, String message, String workflow) throws IOException, ConfigurationException, WorkflowException {
         PhysicalKey namespacePath = namespace.getPath();
         if (!(namespacePath instanceof S3PhysicalKey)) {
