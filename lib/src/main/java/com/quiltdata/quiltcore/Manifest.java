@@ -53,11 +53,15 @@ import software.amazon.awssdk.transfer.s3.model.UploadFileRequest;
 import software.amazon.awssdk.transfer.s3.progress.LoggingTransferListener;
 import software.amazon.awssdk.utils.BinaryUtils;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Manifest {
     public static final String VERSION = "v0";
 
     private static final ObjectMapper TOP_HASH_MAPPER;
+
+    private static final Logger logger = LoggerFactory.getLogger(Manifest.class);
 
     static {
         TOP_HASH_MAPPER = new ObjectMapper();
@@ -85,6 +89,7 @@ public class Manifest {
         }
 
         public Manifest build() {
+            logger.debug("Building manifest with {} entries", entries.size());
             return new Manifest(
                 Collections.unmodifiableSortedMap(entries),
                 metadata == null ? JsonNodeFactory.instance.objectNode().put("version", VERSION) : metadata.deepCopy()
@@ -109,6 +114,7 @@ public class Manifest {
 
         ObjectMapper mapper = new ObjectMapper();
 
+        logger.debug("Reading manifest from {}", path);
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(path.getInputStream()))) {
             String header = reader.readLine();
             JsonNode node = mapper.readTree(header);
@@ -163,9 +169,11 @@ public class Manifest {
             throw new IOException("Unsupported manifest version: " + version);
         }
 
+        logger.debug("Serializing manifest metadata {}", metadata);
         out.write(mapper.writeValueAsBytes(metadata));
         out.write('\n');
 
+        logger.debug("Serializing manifest with {} entries", entries.size());
         for (Map.Entry<String, Entry> e : entries.entrySet()) {
             String logicalKey = e.getKey();
             Entry entry = e.getValue();
