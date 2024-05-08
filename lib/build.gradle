@@ -66,7 +66,7 @@ mavenPublishing {
 
     signAllPublications()
 
-    coordinates('com.quiltdata', 'quiltcore', '0.1.0')
+    coordinates('com.quiltdata', 'quiltcore', '0.1.1')
 
     pom {
         name.set('QuiltCore')
