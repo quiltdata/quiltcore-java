@@ -42,6 +42,7 @@ public class S3PhysicalKey extends PhysicalKey {
      * @param versionId the version ID of the object (optional)
      */
     public S3PhysicalKey(String bucket, String key, String versionId) {
+        logger.debug("Creating S3PhysicalKey: bucket={}, key={}, versionId={}", bucket, key, versionId);
         this.bucket = bucket;
         this.key = key;
         this.versionId = versionId;

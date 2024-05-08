@@ -327,6 +327,7 @@ public class Manifest {
      * @throws IOException If an I/O error occurs.
      */
     public void install(Path dest) throws IOException {
+        logger.debug("Installing manifest with {} entries to {}", entries.size(), dest);
         // TODO: save the manifest to the local registry?
 
         Map<String, List<Map.Entry<String, Entry>>> entriesByBucket =
@@ -371,7 +372,7 @@ public class Manifest {
 
                     Path entryDest = resolveDest(dest, logicalKey);
 
-                    logger.debug("Downloading file from bucket: {}, key: {}", bucket, key);
+                    logger.debug("Downloading key[{}] from bucket: {}", key, bucket);
                     DownloadFileRequest downloadFileRequest =
                         DownloadFileRequest.builder()
                             .getObjectRequest(b -> b.bucket(bucket).key(key))
@@ -418,6 +419,7 @@ public class Manifest {
      * @throws WorkflowException If a workflow error occurs.
      */
     public Manifest push(Namespace namespace, String message, String workflow) throws IOException, ConfigurationException, WorkflowException {
+        logger.debug("Pushing manifest with {} entries to namespace: {}", entries.size(), namespace.getName());
         PhysicalKey namespacePath = namespace.getPath();
         if (!(namespacePath instanceof S3PhysicalKey)) {
             throw new IOException("Only S3 namespace supported");
@@ -503,15 +505,18 @@ public class Manifest {
             throw new IOException("Push failed", ex.getCause());
         }
 
+        logger.debug("Object transfer complete. Building manifest...");
         Manifest newManifest = builder.build();
 
         String topHash = newManifest.calculateTopHash();
+        logger.info("Pushing manifest with top hash: {}", topHash);
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         newManifest.serializeToOutputStream(out);
         namespace.getVersions().resolve(topHash).putBytes(out.toByteArray());
 
         long unixTime = System.currentTimeMillis() / 1000L;
+        logger.debug("Wrote manifest with tag: {}", unixTime);
         namespace.getPath().resolve("" + unixTime).putBytes(topHash.getBytes(StandardCharsets.UTF_8));
         namespace.getPath().resolve("latest").putBytes(topHash.getBytes(StandardCharsets.UTF_8));
 

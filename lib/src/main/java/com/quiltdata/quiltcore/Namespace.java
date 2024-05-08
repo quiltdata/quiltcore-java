@@ -5,10 +5,15 @@ import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 
 import com.quiltdata.quiltcore.key.PhysicalKey;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Represents a namespace in the Quilt Core library.
  */
 public class Namespace {
+    private static final Logger logger = LoggerFactory.getLogger(Namespace.class);
+
     private final Registry registry;
     private final String name;
     private final PhysicalKey path;
@@ -73,6 +78,7 @@ public class Namespace {
      * @throws IOException If an I/O error occurs.
      */
     public String getHash(String tag) throws IOException {
+        logger.debug("Resolving tag: {}", tag);
         return new String(path.resolve(tag).getBytes(), StandardCharsets.UTF_8);
     }
 
@@ -113,6 +119,7 @@ public class Namespace {
      * @throws URISyntaxException If the URI syntax is invalid.
      */
     public Manifest getManifest(String hash) throws IOException, URISyntaxException {
+        logger.debug("Resolving hash: {}", hash);
         String resolvedHash = resolveHash(hash);
         return Manifest.createFromFile(versions.resolve(resolvedHash));
     }
