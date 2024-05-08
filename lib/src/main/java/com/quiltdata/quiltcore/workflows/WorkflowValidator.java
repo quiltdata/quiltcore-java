@@ -13,14 +13,50 @@ import com.quiltdata.quiltcore.Entry;
 
 import io.vertx.json.schema.OutputUnit;
 import io.vertx.json.schema.Validator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+/**
+ * This class represents a WorkflowValidator.
+ * It is responsible for validating workflows.
+ */
 public class WorkflowValidator {
+    private static final Logger logger = LoggerFactory.getLogger(WorkflowValidator.class);
+
+    /**
+     * The data to store.
+     */
     private final JsonNode dataToStore;
+    
+    /**
+     * Indicates whether a message is required.
+     */
     private final boolean isMessageRequired;
+    
+    /**
+     * The pattern for package names.
+     */
     private final Pattern pkgNamePattern;
+    
+    /**
+     * The validator for metadata.
+     */
     private final Validator metadataValidator;
+    
+    /**
+     * The validator for entries.
+     */
     private final Validator entriesValidator;
 
+    /**
+     * Constructs a WorkflowValidator object.
+     *
+     * @param dataToStore The data to store.
+     * @param isMessageRequired Indicates whether a message is required.
+     * @param pkgNamePattern The pattern for package names.
+     * @param metadataValidator The validator for metadata.
+     * @param entriesValidator The validator for entries.
+     */
     public WorkflowValidator(
         JsonNode dataToStore,
         boolean isMessageRequired,
@@ -35,6 +71,15 @@ public class WorkflowValidator {
         this.entriesValidator = entriesValidator;
     }
 
+    /**
+     * Validates the workflow.
+     *
+     * @param name The name of the workflow.
+     * @param entries The entries of the workflow.
+     * @param metadata The metadata of the workflow.
+     * @param message The message of the workflow.
+     * @throws WorkflowException If the workflow fails validation.
+     */
     public void validate(String name, Map<String, Entry> entries, ObjectNode metadata, String message) throws WorkflowException {
         ObjectMapper mapper = new ObjectMapper();
 
@@ -44,6 +89,12 @@ public class WorkflowValidator {
         validateMessage(message);
     }
 
+    /**
+     * Validates the name of the workflow.
+     *
+     * @param name The name of the workflow.
+     * @throws WorkflowException If the name doesn't match the required pattern.
+     */
     private void validateName(String name) throws WorkflowException {
         if (pkgNamePattern != null) {
             Matcher m = pkgNamePattern.matcher(name);
@@ -53,13 +104,28 @@ public class WorkflowValidator {
         }
     }
 
+    /**
+     * Validates the message of the workflow.
+     *
+     * @param message The message of the workflow.
+     * @throws WorkflowException If the message is required but not provided.
+     */
     private void validateMessage(String message) throws WorkflowException {
         if (isMessageRequired && (message == null || message.isEmpty())) {
             throw new WorkflowException("Commit message is required by workflow, but none was provided");
         }
     }
 
+    /**
+     * Creates an entry for validation.
+     *
+     * @param mapper The ObjectMapper instance.
+     * @param logicalKey The logical key of the entry.
+     * @param entry The entry to be validated.
+     * @return The entry for validation.
+     */
     private static Map<String, Object> entryForValidation(ObjectMapper mapper, String logicalKey, Entry entry) {
+        logger.debug("entryForValidation: logicalKey={}, entry={}", logicalKey, entry);
         try {
             return Map.of(
                 "logical_key", logicalKey,
@@ -72,6 +138,13 @@ public class WorkflowValidator {
         }
     }
 
+    /**
+     * Validates the entries of the workflow.
+     *
+     * @param mapper The ObjectMapper instance.
+     * @param entries The entries of the workflow.
+     * @throws WorkflowException If the entries fail validation.
+     */
     private void validateEntries(ObjectMapper mapper, Map<String, Entry> entries) throws WorkflowException {
         if (entriesValidator == null) {
             return;
@@ -88,6 +161,13 @@ public class WorkflowValidator {
         }
     }
 
+    /**
+     * Validates the metadata of the workflow.
+     *
+     * @param mapper The ObjectMapper instance.
+     * @param metadata The metadata of the workflow.
+     * @throws WorkflowException If the metadata fails validation.
+     */
     private void validateMetadata(ObjectMapper mapper, ObjectNode metadata) throws WorkflowException {
         if (metadataValidator == null) {
             return;
@@ -95,6 +175,7 @@ public class WorkflowValidator {
 
         JsonNode userMeta = metadata.get("user_meta");
 
+        logger.debug("validateMetadata: userMeta={}", userMeta);
         try {
             OutputUnit output = metadataValidator.validate(mapper.treeToValue(userMeta, Object.class));
             if (!output.getValid()) {
@@ -106,6 +187,11 @@ public class WorkflowValidator {
         }
     }
 
+    /**
+     * Gets the data to store.
+     *
+     * @return The data to store.
+     */
     public JsonNode getDataToStore() {
         return dataToStore.deepCopy();
     }
