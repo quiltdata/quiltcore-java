@@ -5,6 +5,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.*;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledOnOs;
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.condition.OS;
 
 import com.quiltdata.quiltcore.key.LocalPhysicalKey;
 import com.quiltdata.quiltcore.key.S3PhysicalKey;
+
 
 
 public class PhysicalKeyTest {
@@ -59,5 +61,14 @@ public class PhysicalKeyTest {
             "quilt_summarize.json",
             "scripts/build.py",
         }, files);
+    }
+
+    @Test
+    public void testS3GetReadOnly() throws Exception {
+        S3PhysicalKey pk_in = new S3PhysicalKey("allencell", "README.md", null);
+        S3PhysicalKey pk_out = new S3PhysicalKey("allencell", "test/tmp/README.md", null);
+        byte[] bytes = pk_in.getBytes();
+        assertTrue(bytes.length > 0);
+        assertThrows(S3Exception.class, () -> pk_out.putBytes(bytes));
     }
 }
