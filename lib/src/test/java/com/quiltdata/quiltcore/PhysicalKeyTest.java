@@ -64,7 +64,7 @@ public class PhysicalKeyTest {
     @Test
     public void testS3GetReadOnly() throws Exception {
         S3PhysicalKey pk_in = new S3PhysicalKey("allencell", "README.md", null);
-        S3PhysicalKey pk_out = new S3PhysicalKey("allencell", "test/tmp/README.md", null);
+        S3PhysicalKey pk_out = new S3PhysicalKey("quilt-example", "test/tmp/README.md", null);
         byte[] bytes = pk_in.getBytes();
         assertTrue(bytes.length > 0);
         assertThrows(S3Exception.class, () -> pk_out.putBytes(bytes));
