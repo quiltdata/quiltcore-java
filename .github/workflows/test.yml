@@ -61,4 +61,4 @@ jobs:
       with:
         name: quiltcore-java-test-reports
         path: |
-          /home/runner/work/quiltcore-java/quiltcore-java/plugins/quiltcore-java/build/reports/tests/test/
+          /home/runner/work/quiltcore-java/quiltcore-java/lib/build/reports/tests/test/
