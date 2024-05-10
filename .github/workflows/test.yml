@@ -62,3 +62,4 @@ jobs:
         name: quiltcore-java-test-reports
         path: |
           /home/runner/work/quiltcore-java/quiltcore-java/lib/build/reports/tests/test/
+        overwrite: true
