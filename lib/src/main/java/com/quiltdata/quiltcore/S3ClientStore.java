@@ -31,6 +31,7 @@ public class S3ClientStore {
      * @return An asynchronous S3 client.
      */
     public static S3AsyncClient getAsyncClient(String bucket) {
+        logger.debug("Creating S3 client for bucket: {}", bucket);
         Region region = getBucketRegion(bucket);
         return asyncClientMap.computeIfAbsent(region, S3ClientStore::createAsyncClient);
     }

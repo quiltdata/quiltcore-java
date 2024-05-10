@@ -114,7 +114,7 @@ public class Manifest {
          * @return The built {@link Manifest} object.
          */
         public Manifest build() {
-            logger.debug("Building manifest with {} entries", entries.size());
+            logger.info("Building manifest with {} entries", entries.size());
             return new Manifest(
                 Collections.unmodifiableSortedMap(entries),
                 metadata == null ? JsonNodeFactory.instance.objectNode().put("version", VERSION) : metadata.deepCopy()
@@ -327,7 +327,7 @@ public class Manifest {
      * @throws IOException If an I/O error occurs.
      */
     public void install(Path dest) throws IOException {
-        logger.debug("Installing manifest with {} entries to {}", entries.size(), dest);
+        logger.info("Installing manifest with {} entries to {}", entries.size(), dest);
         // TODO: save the manifest to the local registry?
 
         Map<String, List<Map.Entry<String, Entry>>> entriesByBucket =
@@ -349,7 +349,6 @@ public class Manifest {
             List<Map.Entry<String, Entry>> bucketEntries = e.getValue();
 
             S3AsyncClient s3;
-            logger.debug("Creating S3 client for bucket: {}", bucket);
             try {
                 s3 = S3ClientStore.getAsyncClient(bucket);
             } catch (S3Exception ex) {
@@ -431,7 +430,6 @@ public class Manifest {
         String destBucket = s3NamespacePath.getBucket();
 
         S3AsyncClient s3;
-        logger.debug("Creating S3 client for bucket: {}", destBucket);
         try {
             s3 = S3ClientStore.getAsyncClient(destBucket);
         } catch (S3Exception ex) {
