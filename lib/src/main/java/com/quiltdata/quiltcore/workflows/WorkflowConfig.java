@@ -95,7 +95,7 @@ public class WorkflowConfig {
         byte[] data;
         PhysicalKey effectivePhysicalKey;
 
-        logger.debug("Loading workflows config from {}", physicalKey);
+        logger.info("Loading workflows config from {}", physicalKey);
         try {
             var response = physicalKey.open();
             data = response.inputStream.readAllBytes();

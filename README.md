@@ -8,6 +8,12 @@ Java implementation of the Quilt Packaging API
 ./gradlew check || open lib/build/reports/tests/test/index.html
 ```
 
+To enable debug logging, set the environment variable `LOG4J_DEBUG=true`:
+
+```sh
+LOG4J_DEBUG=true ./gradlew check
+```
+
 ## Publishing
 
 This project is published to [Maven Central](https://central.sonatype.com/artifact/com.quiltdata/quiltcore/versions) using `SonatypeHost.CENTRAL_PORTAL` from the [vanniktech.github.io/gradle-maven-publish-plugin](https://vanniktech.github.io/gradle-maven-publish-plugin/central/#configuring-what-to-publish).

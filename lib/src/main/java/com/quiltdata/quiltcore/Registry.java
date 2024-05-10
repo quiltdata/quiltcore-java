@@ -23,7 +23,7 @@ public class Registry {
      * @param root The root physical key of the registry.
      */
     public Registry(PhysicalKey root) {
-        logger.debug("Creating registry at root: {}", root);
+        logger.info("Creating registry at root: {}", root);
         names = root.resolve(".quilt/named_packages");
         versions = root.resolve(".quilt/packages");
         workflowConfigPath = root.resolve(".quilt/workflows/config.yml");
