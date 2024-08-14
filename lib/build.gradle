@@ -28,7 +28,7 @@ dependencies {
     implementation 'com.pivovarit:throwing-function:1.5.1'
 
     // Use JUnit test framework.
-    testImplementation('org.junit.jupiter:junit-jupiter:5.10.2')
+    testImplementation('org.junit.jupiter:junit-jupiter:5.11.0')
 
     // Add Log4j dependency
     implementation 'org.apache.logging.log4j:log4j-core:2.23.1'
