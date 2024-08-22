@@ -3,7 +3,7 @@ import com.vanniktech.maven.publish.SonatypeHost
 plugins {
     // Apply the java-library plugin for API and implementation separation.
     id 'java-library'
-    id 'com.vanniktech.maven.publish' version '0.28.0'
+    id 'com.vanniktech.maven.publish' version '0.29.0'
     id 'se.patrikerdes.use-latest-versions' version '0.2.18'
     id 'com.github.ben-manes.versions' version '0.51.0'
 }
@@ -21,27 +21,27 @@ repositories {
 
 dependencies {
     // AWS SDK
-    implementation 'software.amazon.awssdk:s3:2.25.49'
-    implementation 'software.amazon.awssdk:s3-transfer-manager:2.25.49'
-    implementation 'software.amazon.awssdk.crt:aws-crt:0.29.18'
+    implementation 'software.amazon.awssdk:s3:2.27.11'
+    implementation 'software.amazon.awssdk:s3-transfer-manager:2.27.11'
+    implementation 'software.amazon.awssdk.crt:aws-crt:0.30.8'
 
     // JSON and YAML parsing.
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.17.1'
-    implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.17.1'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.17.2'
+    implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.17.2'
 
     // JSON Schema validator.
-    implementation 'io.vertx:vertx-json-schema:4.5.7'
+    implementation 'io.vertx:vertx-json-schema:4.5.9'
 
     // Workarounds for Java's checked exceptions.
     implementation 'com.pivovarit:throwing-function:1.5.1'
 
     // Use JUnit test framework.
-    testImplementation('org.junit.jupiter:junit-jupiter:5.10.2')
+    testImplementation('org.junit.jupiter:junit-jupiter:5.11.0')
 
     // Add Log4j dependency
-    implementation 'org.apache.logging.log4j:log4j-core:2.23.1'
-    implementation 'org.apache.logging.log4j:log4j-api:2.23.1'
-    implementation 'org.apache.logging.log4j:log4j-slf4j-impl:2.23.1'
+    implementation 'org.apache.logging.log4j:log4j-core:3.0.0-beta2'
+    implementation 'org.apache.logging.log4j:log4j-api:3.0.0-beta2'
+    implementation 'org.apache.logging.log4j:log4j-slf4j-impl:3.0.0-beta2'
 }
 
 // Apply a specific Java toolchain to ease working on different environments.

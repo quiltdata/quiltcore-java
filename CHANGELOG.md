@@ -3,6 +3,7 @@
 ## [0.1.3] - 2024-08-21
 
 - Fix failing tests
+- Use latest versions of dependencies
   
 ## [0.1.2] - 2024-05-10
 

@@ -14,6 +14,11 @@ To enable debug logging, set the environment variable `LOG4J_DEBUG=true`:
 LOG4J_DEBUG=true ./gradlew check
 ```
 
+## Update
+
+./gradlew useLatestVersions
+./gradlew check
+
 ## Publishing
 
 This project is published to [Maven Central](https://central.sonatype.com/artifact/com.quiltdata/quiltcore/versions) using `SonatypeHost.CENTRAL_PORTAL` from the [vanniktech.github.io/gradle-maven-publish-plugin](https://vanniktech.github.io/gradle-maven-publish-plugin/central/#configuring-what-to-publish).
