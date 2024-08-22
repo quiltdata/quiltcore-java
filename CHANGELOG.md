@@ -7,12 +7,14 @@
   
 ## [0.1.2] - 2024-05-10
 
-- Last Dima version
+- Fixed minor bugs
+- Upated README.md
 
 ## [0.1.1] - 2024-05-09
 
-- Production Version
+- First Ernie Version
+- Added CI/CD pipeline
 
 ## [0.1.0] - 2023-10-04
 
-- Initial release
+- Initial Dima version
