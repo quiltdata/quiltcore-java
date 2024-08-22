@@ -4,6 +4,7 @@
 
 - Fix failing tests
 - Use latest versions of dependencies
+- Add high-level Manifest::fromURI function
   
 ## [0.1.2] - 2024-05-10
 
