@@ -4,6 +4,14 @@ plugins {
     // Apply the java-library plugin for API and implementation separation.
     id 'java-library'
     id 'com.vanniktech.maven.publish' version '0.28.0'
+    id 'se.patrikerdes.use-latest-versions' version '0.2.18'
+    id 'com.github.ben-manes.versions' version '0.51.0'
+}
+
+useLatestVersions {
+   // A blacklist of dependencies to update, in the format of group:name
+   updateBlacklist = [
+   ]
 }
 
 repositories {
