@@ -50,14 +50,13 @@ public class PhysicalKeyTest {
 
     @Test
     public void testS3List() throws Exception {
-        S3PhysicalKey pk = new S3PhysicalKey("quilt-example", "examples/hurdat/", null);
+        S3PhysicalKey pk = new S3PhysicalKey("udp-spec", "nf-quilt/source", null);
         String[] files = pk.listRecursively().toArray(String[]::new);
         Arrays.sort(files);
         assertArrayEquals(new String[] {
-            "data/atlantic-storms.csv",
-            "notebooks/QuickStart.ipynb",
-            "quilt_summarize.json",
-            "scripts/build.py",
+            "COPY_THIS.md",
+            "a_folder/THING_ONE.md",
+            "a_folder/THING_TWO.md",
         }, files);
     }
 
