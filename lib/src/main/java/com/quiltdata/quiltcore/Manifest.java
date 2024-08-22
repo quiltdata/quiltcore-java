@@ -82,7 +82,7 @@ public class Manifest {
      * @throws IllegalArgumentException
      */
 
-    public static Map<String, String> parseQuiltURI(URI uri) throws IllegalArgumentException {
+    public static Map<String, String> ParseQuiltURI(URI uri) throws IllegalArgumentException {
         Map<String, String> result = new TreeMap<java.lang.String, java.lang.String>();
         String scheme = uri.getScheme();
         if (!scheme.equals("quilt+s3")) {
@@ -105,6 +105,7 @@ public class Manifest {
             if (key.equals("path")) {
                 result.put("path", value);
             } else if (key.equals("package")) {
+                result.put("revision", "latest");
                 if (value.contains("@")) {
                     String[] packageParts = value.split("@");
                     if (packageParts.length > 2) {
@@ -113,8 +114,6 @@ public class Manifest {
                     result.put("package", packageParts[0]);
                     if (packageParts.length == 2) {
                         result.put("hash", packageParts[1]);
-                    } else {
-                        result.put("hash", "latest");
                     }
                 } else {
                     result.put("package", value);
@@ -123,6 +122,7 @@ public class Manifest {
                 throw new IllegalArgumentException("Invalid fragment key: " + key);
             }
         }
+        System.out.println("ParseQuiltURI: " + uri + " -> " + result);
         return result;
     }
 
@@ -134,16 +134,24 @@ public class Manifest {
      * @throws IllegalArgumentException If the URI is invalid.
      * 
      */
-    public static Manifest fromUri(String quiltURI) throws URISyntaxException, IllegalArgumentException, IOException {
+    public static Manifest FromQuiltURI(String quiltURI) throws URISyntaxException, IllegalArgumentException, IOException {
         URI uri = new URI(quiltURI);
-        Map<String, String> parts = parseQuiltURI(uri);
+        Map<String, String> parts = ParseQuiltURI(uri);
 
-        PhysicalKey p = PhysicalKey.fromUri(new URI("s3://" + parts.get("bucket")));
+        String s3_uri = "s3://" + parts.get("bucket") + "/";
+        System.out.println("s3_uri: " + s3_uri);
+        URI s3_root = new URI(s3_uri);
+        System.out.println("s3_root: " + s3_root);
+        PhysicalKey p = PhysicalKey.fromUri(s3_root);
         Registry r = new Registry(p);
         String pkg_handle = parts.get("package");
-        String revision = parts.get("hash");
         Namespace n = r.getNamespace(pkg_handle);
-        String hash = n.getHash(revision);
+
+        String hash = parts.get("hash");
+        if (hash == null) {
+            String revision = parts.get("revision");
+            hash = n.getHash(revision);
+        }
         Manifest m = n.getManifest(hash);
         return m;
     }
