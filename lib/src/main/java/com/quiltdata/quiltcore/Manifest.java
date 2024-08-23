@@ -75,10 +75,10 @@ public class Manifest {
     
     /**
      * Returns a map for a URI of the form
-     * "quilt+s3://bucket#package=package@hash&path=path"
+     * "quilt+s3://bucket#package=package{@literal @}hash{@literal &}path=path"
      * 
-     * @param fragment
-     * @return Map<String, String>
+     * @param uri
+     * @return Map{@literal <}String, String{@literal >}
      * @throws IllegalArgumentException
      */
 
@@ -127,7 +127,8 @@ public class Manifest {
     }
 
     /**
-     * Returns a Manifest for a URI of the form "quilt+s3://bucket#package=package@hash&path=path"
+     * Returns a Manifest for a URI of the form
+     * "quilt+s3://bucket#package=package{@literal @}hash{@literal &}path=path"
      * 
      * @param quiltURI The URI to create the manifest from.
      * @return The created {@link Manifest} object.
