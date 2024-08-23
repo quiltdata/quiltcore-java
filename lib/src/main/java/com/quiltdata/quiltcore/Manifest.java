@@ -72,7 +72,90 @@ public class Manifest {
         TOP_HASH_MAPPER.registerModule(sm);
         TOP_HASH_MAPPER.enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS);
     }
+    
+    /**
+     * Returns a map for a URI of the form
+     * "quilt+s3://bucket#package=package@hash&path=path"
+     * 
+     * @param fragment
+     * @return Map<String, String>
+     * @throws IllegalArgumentException
+     */
 
+    public static Map<String, String> ParseQuiltURI(URI uri) throws IllegalArgumentException {
+        Map<String, String> result = new TreeMap<java.lang.String, java.lang.String>();
+        String scheme = uri.getScheme();
+        if (!scheme.equals("quilt+s3")) {
+            throw new IllegalArgumentException("Invalid scheme: " + scheme);
+        }
+        result.put("scheme", scheme);
+        result.put("bucket", uri.getHost());
+        String fragment = uri.getFragment();
+        if (fragment == null) {
+            throw new IllegalArgumentException("Missing fragment");
+        }
+        String[] parts = fragment.split("&");
+        for (String part : parts) {
+            String[] kv = part.split("=");
+            if (kv.length != 2) {
+                throw new IllegalArgumentException("Invalid fragment part: " + part);
+            }
+            String key = kv[0];
+            String value = kv[1];
+            if (key.equals("path")) {
+                result.put("path", value);
+            } else if (key.equals("package")) {
+                result.put("revision", "latest");
+                if (value.contains("@")) {
+                    String[] packageParts = value.split("@");
+                    if (packageParts.length > 2) {
+                        throw new IllegalArgumentException("Invalid package part: " + value);
+                    }
+                    result.put("package", packageParts[0]);
+                    if (packageParts.length == 2) {
+                        result.put("hash", packageParts[1]);
+                    }
+                } else {
+                    result.put("package", value);
+                }
+            } else {
+                throw new IllegalArgumentException("Invalid fragment key: " + key);
+            }
+        }
+        System.out.println("ParseQuiltURI: " + uri + " -> " + result);
+        return result;
+    }
+
+    /**
+     * Returns a Manifest for a URI of the form "quilt+s3://bucket#package=package@hash&path=path"
+     * 
+     * @param quiltURI The URI to create the manifest from.
+     * @return The created {@link Manifest} object.
+     * @throws IllegalArgumentException If the URI is invalid.
+     * 
+     */
+    public static Manifest FromQuiltURI(String quiltURI) throws URISyntaxException, IllegalArgumentException, IOException {
+        URI uri = new URI(quiltURI);
+        Map<String, String> parts = ParseQuiltURI(uri);
+
+        String s3_uri = "s3://" + parts.get("bucket") + "/";
+        System.out.println("s3_uri: " + s3_uri);
+        URI s3_root = new URI(s3_uri);
+        System.out.println("s3_root: " + s3_root);
+        PhysicalKey p = PhysicalKey.fromUri(s3_root);
+        Registry r = new Registry(p);
+        String pkg_handle = parts.get("package");
+        Namespace n = r.getNamespace(pkg_handle);
+
+        String hash = parts.get("hash");
+        if (hash == null) {
+            String revision = parts.get("revision");
+            hash = n.getHash(revision);
+        }
+        Manifest m = n.getManifest(hash);
+        return m;
+    }
+    
     /**
      * Represents a builder for creating a {@link Manifest} object.
      */
@@ -145,9 +228,9 @@ public class Manifest {
      * @param path The path to the file to create the manifest from.
      * @return The created {@link Manifest} object.
      * @throws IOException If an I/O error occurs.
-     * @throws URISyntaxException If the URI is invalid.
+     * @throws IllegalArgumentException If the URI is invalid.
      */
-    public static Manifest createFromFile(PhysicalKey path) throws IOException, URISyntaxException {
+    public static Manifest createFromFile(PhysicalKey path) throws IOException, IllegalArgumentException, URISyntaxException {
         Builder builder = builder();
 
         ObjectMapper mapper = new ObjectMapper();
@@ -180,7 +263,7 @@ public class Manifest {
                 PhysicalKey physicalKey = PhysicalKey.fromUri(new URI(physicalKeyString));
                 long size = row.get("size").asLong();
                 JsonNode hashNode = row.get("hash");
-                Entry.HashType hashType = Entry.HashType.valueOf(hashNode.get("type").asText());
+                Entry.HashType hashType = Entry.HashType.enumFor(hashNode.get("type").asText());
                 String hashValue = hashNode.get("value").asText();
                 JsonNode meta = row.get("meta");
                 if (meta == null) {

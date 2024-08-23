@@ -43,6 +43,26 @@ public class Entry {
          * The SHA-256 hash algorithm.
          */
         SHA256,
+        SHA2_256_Chunked;
+
+        /**
+         * Returns the HashType corresponding to the given name.
+         * 
+         * @param name the name of the hash type
+         * @return the corresponding HashType
+         * @throws IllegalArgumentException if the name does not correspond to any HashType
+         */
+        public static HashType enumFor(String name) {
+            String nameWithoutHyphens = name.replace("-", "_");
+            System.err.println("nameWithoutHyphens: " + nameWithoutHyphens);
+            for (HashType type : HashType.values()) {
+                System.err.println("type.name(): " + type.name());
+                if (type.name().equalsIgnoreCase(nameWithoutHyphens)) {
+                    return type;
+                }
+            }
+            throw new IllegalArgumentException("No enum constant " + HashType.class.getCanonicalName() + "." + name);
+        }
     }
 
     /**
