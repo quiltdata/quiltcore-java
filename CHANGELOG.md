@@ -1,10 +1,13 @@
 # CHANGELOG.md
 
+## [0.1.4] - UNRELEASED
+
+- Add high-level Manifest::fromURI function
+
 ## [0.1.3] - 2024-08-21
 
 - Fix failing tests
 - Use latest versions of dependencies
-- Add high-level Manifest::fromURI function
   
 ## [0.1.2] - 2024-05-10
 

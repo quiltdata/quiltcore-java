@@ -35,4 +35,17 @@ public class ManifestTest {
             fail("Failed to create URI from quiltURI", e);
         }
     }
+
+    @Test
+    void testFromChunkedURI() {
+        // Arrange
+        String quiltURI = "quilt+s3://udp-spec#package=nf-quilt/source";
+        try {
+            Manifest manifest = Manifest.FromQuiltURI(quiltURI);
+            assert manifest != null;
+        } catch (Exception e) {
+            fail("Failed to create URI from quiltURI", e);
+        }
+    }
+
 }
