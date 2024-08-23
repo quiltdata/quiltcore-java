@@ -263,7 +263,7 @@ public class Manifest {
                 PhysicalKey physicalKey = PhysicalKey.fromUri(new URI(physicalKeyString));
                 long size = row.get("size").asLong();
                 JsonNode hashNode = row.get("hash");
-                Entry.HashType hashType = Entry.HashType.valueOf(hashNode.get("type").asText());
+                Entry.HashType hashType = Entry.HashType.enumFor(hashNode.get("type").asText());
                 String hashValue = hashNode.get("value").asText();
                 JsonNode meta = row.get("meta");
                 if (meta == null) {

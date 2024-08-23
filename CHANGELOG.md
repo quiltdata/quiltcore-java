@@ -2,6 +2,7 @@
 
 ## [0.1.4] - UNRELEASED
 
+- Support sha2-256-chunked multihash
 - Add high-level Manifest::fromURI function
 
 ## [0.1.3] - 2024-08-21
