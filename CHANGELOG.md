@@ -1,8 +1,8 @@
 # CHANGELOG.md
 
-## [0.1.4] - UNRELEASED
+## [0.1.4] - 2024-08-22
 
-- Support sha2-256-chunked multihash
+- Support chunked checksums via HasType.SHA2_256_CHUNKED
 - Add high-level Manifest::fromURI function
 
 ## [0.1.3] - 2024-08-21
