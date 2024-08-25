@@ -54,9 +54,7 @@ public class Entry {
          */
         public static HashType enumFor(String name) {
             String nameWithoutHyphens = name.replace("-", "_");
-            System.err.println("nameWithoutHyphens: " + nameWithoutHyphens);
             for (HashType type : HashType.values()) {
-                System.err.println("type.name(): " + type.name());
                 if (type.name().equalsIgnoreCase(nameWithoutHyphens)) {
                     return type;
                 }

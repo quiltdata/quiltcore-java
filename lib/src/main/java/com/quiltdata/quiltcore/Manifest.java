@@ -122,7 +122,7 @@ public class Manifest {
                 throw new IllegalArgumentException("Invalid fragment key: " + key);
             }
         }
-        System.out.println("ParseQuiltURI: " + uri + " -> " + result);
+        // System.out.println("ParseQuiltURI: " + uri + " -> " + result);
         return result;
     }
 
@@ -140,9 +140,7 @@ public class Manifest {
         Map<String, String> parts = ParseQuiltURI(uri);
 
         String s3_uri = "s3://" + parts.get("bucket") + "/";
-        System.out.println("s3_uri: " + s3_uri);
         URI s3_root = new URI(s3_uri);
-        System.out.println("s3_root: " + s3_root);
         PhysicalKey p = PhysicalKey.fromUri(s3_root);
         Registry r = new Registry(p);
         String pkg_handle = parts.get("package");
