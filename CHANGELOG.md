@@ -1,5 +1,10 @@
 # CHANGELOG.md
 
+## [0.1.5] - 2024-08-27
+
+- Remove debugging
+- Update dependencies
+
 ## [0.1.4] - 2024-08-22
 
 - Support chunked checksums via HasType.SHA2_256_CHUNKED
