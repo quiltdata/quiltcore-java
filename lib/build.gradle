@@ -33,7 +33,7 @@ dependencies {
     implementation 'io.vertx:vertx-json-schema:4.5.9'
 
     // Workarounds for Java's checked exceptions.
-    implementation 'com.pivovarit:throwing-function:1.5.1'
+    implementation 'com.pivovarit:throwing-function:1.6.1'
 
     // Use JUnit test framework.
     testImplementation('org.junit.jupiter:junit-jupiter:5.11.3')
