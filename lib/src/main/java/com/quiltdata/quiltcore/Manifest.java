@@ -475,9 +475,10 @@ public class Manifest {
     }
 
     private JsonNode validate(Namespace namespace, String message, String workflow) throws ConfigurationException, WorkflowException {
+        logger.info("Validating manifest with {} entries for namespace: {} workflow: {}", entries.size(), namespace.getName(), workflow);
         WorkflowConfig config = namespace.getRegistry().getWorkflowConfig();
         if (config == null) {
-            if (workflow == null) {
+            if (workflow == null || workflow.isBlank()) {
                 return null;
             }
             throw new WorkflowException("Workflow is specified, but no workflows config exists");

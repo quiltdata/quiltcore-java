@@ -1,5 +1,10 @@
 # CHANGELOG.md
 
+## [0.1.6] - UNRELEASED
+
+- Add convenience methods
+- Fix failing CI tests
+
 ## [0.1.5] - 2024-08-27
 
 - Remove debugging

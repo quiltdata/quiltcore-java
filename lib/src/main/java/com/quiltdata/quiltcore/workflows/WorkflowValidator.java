@@ -125,7 +125,7 @@ public class WorkflowValidator {
      * @return The entry for validation.
      */
     private static Map<String, Object> entryForValidation(ObjectMapper mapper, String logicalKey, Entry entry) {
-        logger.debug("entryForValidation: logicalKey={}, entry={}", logicalKey, entry);
+        logger.info("entryForValidation: logicalKey={}, entry={}", logicalKey, entry);
         try {
             return Map.of(
                 "logical_key", logicalKey,
@@ -157,6 +157,7 @@ public class WorkflowValidator {
 
         OutputUnit output = entriesValidator.validate(entriesForValidation);
         if (!output.getValid()) {
+            logger.error("failed: {} validateEntries: {} for validator: {}", output, entriesForValidation, entriesValidator);
             throw new WorkflowException("Package entries failed validation");
         }
     }
@@ -175,10 +176,11 @@ public class WorkflowValidator {
 
         JsonNode userMeta = metadata.get("user_meta");
 
-        logger.debug("validateMetadata: userMeta={}", userMeta);
+        logger.info("validateMetadata: userMeta={}", userMeta);
         try {
             OutputUnit output = metadataValidator.validate(mapper.treeToValue(userMeta, Object.class));
             if (!output.getValid()) {
+                logger.error("failed: {} validateMetadata: {} for validator: {}", output, userMeta, metadataValidator);
                 throw new WorkflowException("Metadata failed validation");
             }
         } catch (JsonProcessingException e) {

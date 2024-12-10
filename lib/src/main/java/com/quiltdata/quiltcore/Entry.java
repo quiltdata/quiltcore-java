@@ -109,6 +109,21 @@ public class Entry {
     }
 
     /**
+     * String representation
+     *
+     * @return the Entry details
+     */
+    @Override
+    public String toString() {
+        return "Entry{" +
+                "physicalKey=" + physicalKey +
+                ", size=" + size +
+                ", hash=" + hash +
+                ", meta=" + metadata +
+                '}';
+    }
+
+    /**
      * Returns the physical key of the entry.
      *
      * @return the physical key
