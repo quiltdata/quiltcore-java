@@ -254,7 +254,7 @@ public class WorkflowConfig {
         JsonSchemaOptions options = new JsonSchemaOptions()
             .setBaseUri("https://quiltdata.com/")  // TODO: remove it; not actually used.
             .setDraft(draft);
-        logger.info("Creating validator for schema {} with options {}", schema, options);
+        logger.info("Creating validator for schema: {}", schema);
         Validator validator = Validator.create(schema, options);
 
         info = new SchemaInfo(validator, schemaEffectivePhysicalKey);
