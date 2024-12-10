@@ -1,7 +1,7 @@
 .PHONY: all verify clean compile
 
 verify:
-	./gradlew check || lib/build/reports/tests/test/index.html
+	./gradlew check || open lib/build/reports/tests/test/index.html
 
 clean:
 	./gradlew clean

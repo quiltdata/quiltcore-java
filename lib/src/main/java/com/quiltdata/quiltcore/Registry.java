@@ -50,6 +50,7 @@ public class Registry {
         names = root.resolve(".quilt/named_packages");
         versions = root.resolve(".quilt/packages");
         workflowConfigPath = root.resolve(".quilt/workflows/config.yml");
+        // TODO: Handle config.yaml as well
     }
 
     /**
