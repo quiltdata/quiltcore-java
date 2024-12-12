@@ -83,13 +83,13 @@ public class RegistryTest {
         b.addEntry("bar", new Entry(new LocalPhysicalKey(bar), Files.size(bar), null, null));
         Manifest m = b.build();
 
-        Manifest m2 = m.push(n, null, "");
+        Manifest m2 = m.push(n, null, null);
 
-        // assertTrue(m2.getMetadata().get("workflow").get("id").isNull());
+        assertTrue(m2.getMetadata().get("workflow").get("id").isNull());
 
         String topHash = m2.calculateTopHash();
 
-        assertEquals("97ea1254aab77d28e0f459a739351879b46e6e6142efdab327abf6ab6bdf72dd", topHash);
+        assertEquals("e329b376d98083054be18881f3471fff7957acdfca8b02c54946f082dc56b572", topHash);
     }
 
     @Test
