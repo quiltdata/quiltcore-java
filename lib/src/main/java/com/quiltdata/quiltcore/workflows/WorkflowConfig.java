@@ -186,11 +186,9 @@ public class WorkflowConfig {
         Pattern pkgNamePattern = pkgNamePatternNode != null ? Pattern.compile(pkgNamePatternNode.asText()) : null;
 
         JsonNode metadataSchemaId = workflowData.get("metadata_schema");
-        logger.info("metadataSchemaId={}", metadataSchemaId);
         Validator metadataValidator = metadataSchemaId != null ? makeValidatorFromSchema(metadataSchemaId.asText()) : null;
 
         JsonNode entriesSchemaId = workflowData.get("entries_schema");
-        logger.info("entriesSchemaId={}", entriesSchemaId);
         Validator entriesValidator = entriesSchemaId != null ? makeValidatorFromSchema(entriesSchemaId.asText()) : null;
 
         JsonNode isMessageRequiredNode = workflowData.get("is_message_required");
@@ -227,7 +225,6 @@ public class WorkflowConfig {
         JsonNode schemaNode;
         PhysicalKey schemaEffectivePhysicalKey;
 
-        logger.info("Loading schema from {}", schemaPhysicalKey);
         try {
             var response = schemaPhysicalKey.open();
             schemaNode = mapper.readTree(response.inputStream);
@@ -254,7 +251,7 @@ public class WorkflowConfig {
         JsonSchemaOptions options = new JsonSchemaOptions()
             .setBaseUri("https://quiltdata.com/")  // TODO: remove it; not actually used.
             .setDraft(draft);
-        logger.info("Creating validator for schema: {}", schema);
+        logger.debug("Creating validator for schema: {}", schema);
         Validator validator = Validator.create(schema, options);
 
         info = new SchemaInfo(validator, schemaEffectivePhysicalKey);

@@ -125,7 +125,7 @@ public class WorkflowValidator {
      * @return The entry for validation.
      */
     private static Map<String, Object> entryForValidation(ObjectMapper mapper, String logicalKey, Entry entry) {
-        logger.info("entryForValidation: logicalKey={}, entry={}", logicalKey, entry);
+        logger.debug("entryForValidation: logicalKey={}, entry={}", logicalKey, entry);
         try {
             return Map.of(
                 "logical_key", logicalKey,
@@ -176,7 +176,7 @@ public class WorkflowValidator {
 
         JsonNode userMeta = metadata.get("user_meta");
 
-        logger.info("validateMetadata: userMeta={}", userMeta);
+        logger.debug("validateMetadata: userMeta={}", userMeta);
         try {
             OutputUnit output = metadataValidator.validate(mapper.treeToValue(userMeta, Object.class));
             if (!output.getValid()) {
