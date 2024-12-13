@@ -3,6 +3,7 @@ package com.quiltdata.quiltcore;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -25,7 +26,7 @@ public class RegistryTest {
     public void testLocalPackage() throws Exception {
         Path dir = Path.of("src", "test", "resources", "packages");
         String dirURI = dir.toUri().toString();
-        Namespace n = Registry.createNamespaceAtUri("test/test", dirURI);
+        Namespace n = Registry.CreateNamespaceAtUri("test/test", dirURI);
         String hash = n.getHash("latest");
         Manifest m = n.getManifest(hash);
 
@@ -34,7 +35,7 @@ public class RegistryTest {
 
     @Test
     public void testS3Install(@TempDir Path dest) throws Exception {
-        Namespace n = Registry.createNamespaceAtUri("examples/metadata", READ_BUCKET);
+        Namespace n = Registry.CreateNamespaceAtUri("examples/metadata", READ_BUCKET);
         String hash = n.getHash("latest");
         Manifest m = n.getManifest(hash);
 
@@ -62,7 +63,7 @@ public class RegistryTest {
 
     @Test
     public void testResolveHash() throws Exception {
-        Namespace n = Registry.createNamespaceAtUri("examples/metadata", READ_BUCKET);
+        Namespace n = Registry.CreateNamespaceAtUri("examples/metadata", READ_BUCKET);
         String latest = n.getHash("latest");
 
         assertEquals(latest, n.resolveHash("fd2044"));
@@ -72,17 +73,14 @@ public class RegistryTest {
 
     @Test
     public void testS3Push() throws Exception {
-        Namespace n = Registry.createNamespaceAtUri("dima/java_test", WRITE_BUCKET);
+        Namespace n = Registry.CreateNamespaceAtUri("dima/java_test", WRITE_BUCKET);
         Path dir = Path.of("src", "test", "resources", "dir").toAbsolutePath();
 
         Path foo = dir.resolve("foo.txt");
         Path bar = dir.resolve("bar.txt");
+        Map<String, Path> paths = Map.of("foo", foo, "bar", bar);
 
-        Manifest.Builder b = Manifest.builder();
-        b.addEntry("foo", new Entry(new LocalPhysicalKey(foo), Files.size(foo), null, null));
-        b.addEntry("bar", new Entry(new LocalPhysicalKey(bar), Files.size(bar), null, null));
-        Manifest m = b.build();
-
+        Manifest m = Manifest.BuildFromPaths(paths, null, null);
         Manifest m2 = m.push(n, null, null);
 
         assertTrue(m2.getMetadata().get("workflow").get("id").isNull());
@@ -95,7 +93,7 @@ public class RegistryTest {
     @Test
     public void testS3PushErrors() throws Exception {
         Path dir = Path.of("src", "test", "resources", "dir").toAbsolutePath();
-        Namespace n = Registry.createNamespaceAtUri("dima/java_test", WRITE_BUCKET);
+        Namespace n = Registry.CreateNamespaceAtUri("dima/java_test", WRITE_BUCKET);
 
         Path bad = dir.resolve("no such file.txt");
 
@@ -108,19 +106,16 @@ public class RegistryTest {
 
     @Test
     public void testS3WorkflowPush() throws Exception {
-        Namespace n = Registry.createNamespaceAtUri("dima/java_workflow_test", WRITE_BUCKET);
+        Namespace n = Registry.CreateNamespaceAtUri("dima/java_workflow_test", WRITE_BUCKET);
 
         Path dir = Path.of("src", "test", "resources", "dir").toAbsolutePath();
         Path foo = dir.resolve("foo.txt");
+        Object user_meta = "123456";
+        Map<String, Path> paths = Map.of("README.md", foo);
 
-        Manifest.Builder b = Manifest.builder();
-        ObjectNode packageMeta = JsonNodeFactory.instance.objectNode()
-            .put("version", "v0")
-            .put("user_meta", "123456");
-        b.setMetadata(packageMeta);
         ObjectNode meta = JsonNodeFactory.instance.objectNode().put("foo", "bar");
-        b.addEntry("README.md", new Entry(new LocalPhysicalKey(foo), Files.size(foo), null, meta));
-        Manifest m = b.build();
+        Map<String, ObjectNode> object_meta = Map.of("README.md", meta);
+        Manifest m = Manifest.BuildFromPaths(paths, user_meta, object_meta);
 
         Manifest m2 = m.push(n, "commit stuff", "alpha");
 

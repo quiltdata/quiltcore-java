@@ -1,6 +1,5 @@
 package com.quiltdata.quiltcore;
 
-import com.quiltdata.quiltcore.key.LocalPhysicalKey;
 import com.quiltdata.quiltcore.key.PhysicalKey;
 import com.quiltdata.quiltcore.workflows.ConfigurationException;
 import com.quiltdata.quiltcore.workflows.WorkflowConfig;
@@ -9,7 +8,6 @@ import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.Path;
 
 /**
  * The Registry class represents a registry of packages and namespaces in the Quilt Core library.
@@ -30,7 +28,7 @@ public class Registry {
      * @return Namespace
      * @throws URISyntaxException: if uriString is invalid
      */
-    public static Namespace createNamespaceAtUri(String pkgName, String uriString) throws URISyntaxException {
+    public static Namespace CreateNamespaceAtUri(String pkgName, String uriString) throws URISyntaxException {
         if (!uriString.endsWith("/")) {
             uriString += '/';
         }

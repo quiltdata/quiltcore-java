@@ -2,7 +2,9 @@
 
 ## [0.1.6] - UNRELEASED
 
-- Add convenience methods
+- Add convenience methods:
+  - Registry.CreateNamespaceAtUri
+  - Manifest.BuildFromPaths
 - Fix failing CI tests
 
 ## [0.1.5] - 2024-08-27

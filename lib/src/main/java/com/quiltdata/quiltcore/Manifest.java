@@ -60,6 +60,7 @@ public class Manifest {
      * The version of the manifest.
      */
     public static final String VERSION = "v0";
+    public static final String USER_META = "user_meta";
 
     private static final ObjectMapper TOP_HASH_MAPPER;
 
@@ -77,13 +78,13 @@ public class Manifest {
      * Returns a map for a URI of the form
      * "quilt+s3://bucket#package=package{@literal @}hash{@literal &}path=path"
      * 
-     * @param uri
+     * @param uri: Quilt+ URI
      * @return Map{@literal <}String, String{@literal >}
-     * @throws IllegalArgumentException
+     * @throws IllegalArgumentException if scheme != quilt+s3
      */
 
     public static Map<String, String> ParseQuiltURI(URI uri) throws IllegalArgumentException {
-        Map<String, String> result = new TreeMap<java.lang.String, java.lang.String>();
+        Map<String, String> result = new TreeMap<>();
         String scheme = uri.getScheme();
         if (!scheme.equals("quilt+s3")) {
             throw new IllegalArgumentException("Invalid scheme: " + scheme);
@@ -151,15 +152,48 @@ public class Manifest {
             String revision = parts.get("revision");
             hash = n.getHash(revision);
         }
-        Manifest m = n.getManifest(hash);
-        return m;
+        return n.getManifest(hash);
+    }
+
+    public static ObjectNode FormatUserMeta(Object user_meta) {
+        ObjectNode base = JsonNodeFactory.instance.objectNode().put("version", VERSION);
+
+        if (user_meta == null) {
+            return base.set(USER_META, null);
+        } else if (user_meta instanceof Map) {
+            ObjectMapper mapper = new ObjectMapper();
+            return base.set(USER_META, mapper.valueToTree(user_meta));
+        } else if (user_meta instanceof String) {
+            return base.put(USER_META, (String)user_meta);
+        }
+        throw new IllegalArgumentException("Invalid user_meta[" + user_meta.getClass().getName() + "] " + user_meta);
+    }
+
+    public static Manifest BuildFromPaths(Map<String, Path> paths, Object user_meta, Map<String, ObjectNode> object_meta) {
+        Manifest.Builder b = Manifest.builder();
+        if (user_meta != null) {
+            ObjectNode packageMeta = FormatUserMeta(user_meta);
+            b.setMetadata(packageMeta);
+        }
+        for (Map.Entry<String, Path> e : paths.entrySet()) {
+            String key = e.getKey();
+            Path p = e.getValue();
+            ObjectNode obj_meta = (object_meta != null) ? object_meta.get(key) : null;
+            try {
+                long size = Files.size(p);
+                b.addEntry(key, new Entry(new LocalPhysicalKey(p), size, null, obj_meta));
+            } catch (IOException ex) {
+                logger.error("Skipping entry[{}]: failed to get size for path {}", key, p, ex);
+            }
+        }
+        return b.build();
     }
     
     /**
      * Represents a builder for creating a {@link Manifest} object.
      */
     public static class Builder {
-        private SortedMap<String, Entry> entries;
+        private final SortedMap<String, Entry> entries;
         private ObjectNode metadata;
 
         /**
@@ -265,12 +299,12 @@ public class Manifest {
                 Entry.HashType hashType = Entry.HashType.enumFor(hashNode.get("type").asText());
                 String hashValue = hashNode.get("value").asText();
                 JsonNode meta = row.get("meta");
-                if (meta == null) {
-                    // leave it as is
-                } else if (meta.isNull()) {
-                    meta = null;
-                } else if (!meta.isObject()) {
-                    throw new IOException("Invalid entry metadata: " + node);
+                if (meta != null) {
+                    if (meta.isNull()) {
+                        meta = null;
+                    } else if (!meta.isObject()) {
+                        throw new IOException("Invalid entry metadata: " + node);
+                    }
                 }
 
                 Entry entry = new Entry(physicalKey, size, new Entry.Hash(hashType, hashValue), (ObjectNode)meta);
@@ -442,7 +476,7 @@ public class Manifest {
                 S3TransferManager transferManager =
                     S3TransferManager.builder()
                         .s3Client(s3)
-                        .build();
+                        .build()
             ) {
                 List<CompletableFuture<CompletedFileDownload>> futures = new ArrayList<>(bucketEntries.size());
 
@@ -535,12 +569,12 @@ public class Manifest {
         }
         builder.setMetadata(newMetadata);
 
-        logger.debug("Building transfer manager for bucket: {}", destBucket);
+        logger.debug("push: building transfer manager for bucket: {}", destBucket);
         try(
             S3TransferManager transferManager =
                 S3TransferManager.builder()
                     .s3Client(s3)
-                    .build();
+                    .build()
         ) {
             List<Map.Entry<String, CompletableFuture<CompletedFileUpload>>> futures =
                 new ArrayList<>(entriesWithHashes.size());
