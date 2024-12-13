@@ -1,32 +1,31 @@
 package com.quiltdata.quiltcore;
 
-import java.io.IOException;
-import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Path;
-
-import static org.junit.jupiter.api.Assertions.*;
-
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
-import org.junit.jupiter.api.condition.DisabledOnOs;
-import org.junit.jupiter.api.condition.OS;
-
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.quiltdata.quiltcore.key.LocalPhysicalKey;
-import com.quiltdata.quiltcore.key.PhysicalKey;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledOnOs;
+import org.junit.jupiter.api.condition.OS;
+import org.junit.jupiter.api.io.TempDir;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 
 public class RegistryTest {
+    String READ_BUCKET = "s3://quilt-example";
+    String WRITE_BUCKET = "s3://quilt-dima2";
+
     @Test
     @DisabledOnOs({ OS.WINDOWS })
     public void testLocalPackage() throws Exception {
-        Path dir = Path.of("src", "test", "resources", "packages").toAbsolutePath();
-        PhysicalKey p = new LocalPhysicalKey(dir);
-
-        Registry r = new Registry(p);
-        Namespace n = r.getNamespace("test/test");
+        Path dir = Path.of("src", "test", "resources", "packages");
+        String dirURI = dir.toUri().toString();
+        Namespace n = Registry.CreateNamespaceAtUri("test/test", dirURI);
         String hash = n.getHash("latest");
         Manifest m = n.getManifest(hash);
 
@@ -35,10 +34,7 @@ public class RegistryTest {
 
     @Test
     public void testS3Install(@TempDir Path dest) throws Exception {
-        PhysicalKey p = PhysicalKey.fromUri(new URI("s3://quilt-example/"));
-
-        Registry r = new Registry(p);
-        Namespace n = r.getNamespace("examples/metadata");
+        Namespace n = Registry.CreateNamespaceAtUri("examples/metadata", READ_BUCKET);
         String hash = n.getHash("latest");
         Manifest m = n.getManifest(hash);
 
@@ -66,10 +62,7 @@ public class RegistryTest {
 
     @Test
     public void testResolveHash() throws Exception {
-        PhysicalKey p = PhysicalKey.fromUri(new URI("s3://quilt-example/"));
-
-        Registry r = new Registry(p);
-        Namespace n = r.getNamespace("examples/metadata");
+        Namespace n = Registry.CreateNamespaceAtUri("examples/metadata", READ_BUCKET);
         String latest = n.getHash("latest");
 
         assertEquals(latest, n.resolveHash("fd2044"));
@@ -79,38 +72,23 @@ public class RegistryTest {
 
     @Test
     public void testS3Push() throws Exception {
+        Namespace n = Registry.CreateNamespaceAtUri("dima/java_test", WRITE_BUCKET);
         Path dir = Path.of("src", "test", "resources", "dir").toAbsolutePath();
 
-        PhysicalKey p = PhysicalKey.fromUri(new URI("s3://quilt-dima2/"));
-
-        Registry r = new Registry(p);
-        Namespace n = r.getNamespace("dima/java_test");
-
-        Path foo = dir.resolve("foo.txt");
-        Path bar = dir.resolve("bar.txt");
-
-        Manifest.Builder b = Manifest.builder();
-        b.addEntry("foo", new Entry(new LocalPhysicalKey(foo), Files.size(foo), null, null));
-        b.addEntry("bar", new Entry(new LocalPhysicalKey(bar), Files.size(bar), null, null));
-        Manifest m = b.build();
-
-        Manifest m2 = m.push(n, null, "");
+        Manifest m = Manifest.BuildFromDir(dir, null, ".*\\.txt");
+        Manifest m2 = m.push(n, null, null);
 
         assertTrue(m2.getMetadata().get("workflow").get("id").isNull());
 
         String topHash = m2.calculateTopHash();
 
-        assertEquals("97ea1254aab77d28e0f459a739351879b46e6e6142efdab327abf6ab6bdf72dd", topHash);
+        assertEquals("71cba8513adfbe7dc4e4b4e03d9e71ba36c3f10745cc4f54949028c2339a35e2", topHash);
     }
 
     @Test
     public void testS3PushErrors() throws Exception {
         Path dir = Path.of("src", "test", "resources", "dir").toAbsolutePath();
-
-        PhysicalKey p = PhysicalKey.fromUri(new URI("s3://quilt-dima2/"));
-
-        Registry r = new Registry(p);
-        Namespace n = r.getNamespace("dima/java_test");
+        Namespace n = Registry.CreateNamespaceAtUri("dima/java_test", WRITE_BUCKET);
 
         Path bad = dir.resolve("no such file.txt");
 
@@ -123,23 +101,16 @@ public class RegistryTest {
 
     @Test
     public void testS3WorkflowPush() throws Exception {
+        Namespace n = Registry.CreateNamespaceAtUri("dima/java_workflow_test", WRITE_BUCKET);
+
         Path dir = Path.of("src", "test", "resources", "dir").toAbsolutePath();
-
-        PhysicalKey p = PhysicalKey.fromUri(new URI("s3://quilt-dima2/"));
-
-        Registry r = new Registry(p);
-        Namespace n = r.getNamespace("dima/java_workflow_test");
-
         Path foo = dir.resolve("foo.txt");
+        Object user_meta = "123456";
+        Map<String, Path> paths = Map.of("README.md", foo);
 
-        Manifest.Builder b = Manifest.builder();
-        ObjectNode packageMeta = JsonNodeFactory.instance.objectNode()
-            .put("version", "v0")
-            .put("user_meta", "123456");
-        b.setMetadata(packageMeta);
         ObjectNode meta = JsonNodeFactory.instance.objectNode().put("foo", "bar");
-        b.addEntry("README.md", new Entry(new LocalPhysicalKey(foo), Files.size(foo), null, meta));
-        Manifest m = b.build();
+        Map<String, ObjectNode> object_meta = Map.of("README.md", meta);
+        Manifest m = Manifest.BuildFromPaths(paths, user_meta, object_meta);
 
         Manifest m2 = m.push(n, "commit stuff", "alpha");
 

@@ -157,6 +157,7 @@ public class WorkflowValidator {
 
         OutputUnit output = entriesValidator.validate(entriesForValidation);
         if (!output.getValid()) {
+            logger.error("failed: {} validateEntries: {} for validator: {}", output, entriesForValidation, entriesValidator);
             throw new WorkflowException("Package entries failed validation");
         }
     }
@@ -179,6 +180,7 @@ public class WorkflowValidator {
         try {
             OutputUnit output = metadataValidator.validate(mapper.treeToValue(userMeta, Object.class));
             if (!output.getValid()) {
+                logger.error("failed: {} validateMetadata: {} for validator: {}", output, userMeta, metadataValidator);
                 throw new WorkflowException("Metadata failed validation");
             }
         } catch (JsonProcessingException e) {
