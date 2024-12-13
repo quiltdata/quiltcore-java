@@ -6,18 +6,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-/**
- * A Jackson class that represents a JSON object node.
- * 
- * <p>
- * An `ObjectNode` is a container for key-value pairs, where the keys are strings and the values can be any valid JSON node.
- * It provides methods to manipulate and access the key-value pairs within the object.
- * </p>
- * 
- * <p>
- * This class is part of the Jackson JSON library, which provides a fast and flexible way to process JSON data in Java.
- * </p>
- */
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.quiltdata.quiltcore.key.PhysicalKey;
 
@@ -26,11 +14,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Represents an entry in the Quilt data repository.
- * An entry contains information about a file or object stored in the repository.
- */
-/**
- * Represents an entry in the Quilt dataset.
+ * Represents an individual entry in the Quilt data repository.
+ *
+ * <p>
+ * The {@code Entry} class represents a row in a Quilt package.
+ * </p>
+ *
+ * <h2>Usage Example:</h2>
+ * <pre>{@code
+ * Entry entry = new Entry(new LocalPhysicalKey("foo), 123, hash, metadata)
+ * }</pre>
+ *
  */
 public class Entry {
     private static final Logger logger = LoggerFactory.getLogger(Entry.class);
@@ -38,7 +32,7 @@ public class Entry {
     /**
      * Enumerates the types of hash algorithms supported by Quilt.
      */
-    public static enum HashType {
+    public enum HashType {
         /**
          * The SHA-256 hash algorithm.
          */
