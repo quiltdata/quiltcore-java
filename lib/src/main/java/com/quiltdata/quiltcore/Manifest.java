@@ -155,6 +155,32 @@ public class Manifest {
         return n.getManifest(hash);
     }
 
+    /**
+     * Formats the provided user metadata into a JSON {@link ObjectNode}.
+     *
+     * <p>
+     * This method takes a user-provided metadata object, processes it, and converts it
+     * into a structured JSON object. The resulting {@code ObjectNode} can be integrated
+     * into manifests or other contexts where JSON metadata is required.
+     * </p>
+     *
+     * @param user_meta The user metadata to be formatted. This can be a Map, a String, or null.
+     *
+     * @return A JSON {@link ObjectNode} representing the formatted user metadata.
+     *         Returns an empty {@link ObjectNode} if {@code user_meta} is {@code null}.
+     *
+     * @throws IllegalArgumentException if the provided {@code user_meta} is invalid
+     *                                  and cannot be processed.
+     *
+     * <h2>Usage Example:</h2>
+     * <pre>{@code
+     * Object userMeta = new HashMap<>();
+     * ((Map) userMeta).put("key", "value");
+     *
+     * ObjectNode formattedMeta = FormatUserMeta(userMeta);
+     * System.out.println(formattedMeta.toString()); // Outputs JSON representation
+     * }</pre>
+     */
     public static ObjectNode FormatUserMeta(Object user_meta) {
         ObjectNode base = JsonNodeFactory.instance.objectNode().put("version", VERSION);
 
@@ -169,6 +195,34 @@ public class Manifest {
         throw new IllegalArgumentException("Invalid user_meta[" + user_meta.getClass().getName() + "] " + user_meta);
     }
 
+    /**
+     * Builds a {@link Manifest} from the provided paths, user metadata, and object metadata.
+     *
+     * <p>
+     * This static method constructs a {@code Manifest} object by taking a mapping of
+     * logical names to physical paths, along with optional user-provided metadata and
+     * object-specific metadata. It validates and processes the input to generate
+     * a structured representation of the manifest.
+     * </p>
+     *
+     * @param paths A map where the keys are logical names, and the values are
+     *              corresponding file paths on the system. Cannot be {@code null}.
+     * @param user_meta Optional user metadata associated with the manifest. Can be {@code null}.
+     * @param object_meta A map where the keys are object names,
+     *                    and the values are JSON object nodes containing metadata for each object. Can be {@code null}.
+     *
+     * @return A constructed {@link Manifest} instance encapsulating the provided data.
+     *
+     * @throws IllegalArgumentException if the {@code paths} map is {@code null} or contains invalid entries.
+     *
+     * <h2>Usage Example:</h2>
+     * <pre>{@code
+     * Map<String, Path> paths = new HashMap<>();
+     * paths.put("exampleKey", Paths.get("/example/path"));
+     *
+     * Manifest manifest = Manifest.BuildFromPaths(paths, null, null);
+     * }</pre>
+     */
     public static Manifest BuildFromPaths(Map<String, Path> paths, Object user_meta, Map<String, ObjectNode> object_meta) {
         Manifest.Builder b = Manifest.builder();
         if (user_meta != null) {
@@ -188,7 +242,25 @@ public class Manifest {
         }
         return b.build();
     }
-    
+
+    public static Manifest BuildFromDir(Path dir, Object user_meta, String regex) {
+        Map<String, Path> map = new TreeMap<>();
+        try {
+            Files.walk(dir)
+                    .filter(Files::isRegularFile) // Filter regular files
+                    .forEach(f -> {
+                        String logicalKey = dir.relativize(f).toString();
+                        if (regex == null || logicalKey.matches(regex)) {
+                            String withoutExtension = logicalKey.replaceFirst("\\.[^.]+$", "");
+                            map.put(withoutExtension, f); // Add the entry to the map
+                        }
+                    });
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return BuildFromPaths(map, user_meta, null);
+    }
+
     /**
      * Represents a builder for creating a {@link Manifest} object.
      */

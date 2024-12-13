@@ -1,20 +1,19 @@
 package com.quiltdata.quiltcore;
 
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.quiltdata.quiltcore.key.LocalPhysicalKey;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledOnOs;
+import org.junit.jupiter.api.condition.OS;
+import org.junit.jupiter.api.io.TempDir;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
-
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
-import org.junit.jupiter.api.condition.DisabledOnOs;
-import org.junit.jupiter.api.condition.OS;
-
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.quiltdata.quiltcore.key.LocalPhysicalKey;
 
 
 public class RegistryTest {
@@ -76,11 +75,7 @@ public class RegistryTest {
         Namespace n = Registry.CreateNamespaceAtUri("dima/java_test", WRITE_BUCKET);
         Path dir = Path.of("src", "test", "resources", "dir").toAbsolutePath();
 
-        Path foo = dir.resolve("foo.txt");
-        Path bar = dir.resolve("bar.txt");
-        Map<String, Path> paths = Map.of("foo", foo, "bar", bar);
-
-        Manifest m = Manifest.BuildFromPaths(paths, null, null);
+        Manifest m = Manifest.BuildFromDir(dir, null, ".*\\.txt");
         Manifest m2 = m.push(n, null, null);
 
         assertTrue(m2.getMetadata().get("workflow").get("id").isNull());
