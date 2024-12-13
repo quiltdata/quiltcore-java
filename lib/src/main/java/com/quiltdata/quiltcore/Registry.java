@@ -6,6 +6,9 @@ import com.quiltdata.quiltcore.workflows.WorkflowConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+
 /**
  * The Registry class represents a registry of packages and namespaces in the Quilt Core library.
  * It provides methods to access and manipulate the registry.
@@ -18,6 +21,24 @@ public class Registry {
     private final PhysicalKey workflowConfigPath;
 
     /**
+     * Constructs a new Namespace object for a registry as that @uriString
+     *
+     * @param pkgName: namespace of the package
+     * @param uriString: uri of the physical key hosting the registry
+     * @return Namespace
+     * @throws URISyntaxException: if uriString is invalid
+     */
+    public static Namespace CreateNamespaceAtUri(String pkgName, String uriString) throws URISyntaxException {
+        if (!uriString.endsWith("/")) {
+            uriString += '/';
+        }
+        URI uri = new URI(uriString);
+        PhysicalKey pk = PhysicalKey.fromUri(uri);
+        Registry r = new Registry(pk);
+        return r.getNamespace(pkgName);
+    }
+
+    /**
      * Constructs a new Registry object with the specified root physical key.
      *
      * @param root The root physical key of the registry.
@@ -27,6 +48,7 @@ public class Registry {
         names = root.resolve(".quilt/named_packages");
         versions = root.resolve(".quilt/packages");
         workflowConfigPath = root.resolve(".quilt/workflows/config.yml");
+        // TODO: Handle config.yaml as well
     }
 
     /**

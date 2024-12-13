@@ -1,5 +1,13 @@
 # CHANGELOG.md
 
+## [0.1.6] - UNRELEASED
+
+- Fix failing CI tests
+- Add convenience methods:
+  - Registry.CreateNamespaceAtUri
+  - Manifest.BuildFromPaths
+  - Manifest.BuildFromDir
+
 ## [0.1.5] - 2024-08-27
 
 - Remove debugging

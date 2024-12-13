@@ -192,7 +192,7 @@ public class WorkflowConfig {
         Validator entriesValidator = entriesSchemaId != null ? makeValidatorFromSchema(entriesSchemaId.asText()) : null;
 
         JsonNode isMessageRequiredNode = workflowData.get("is_message_required");
-        boolean isMessageRequired = isMessageRequiredNode != null ? isMessageRequiredNode.asBoolean(false) : false;
+        boolean isMessageRequired = isMessageRequiredNode != null && isMessageRequiredNode.asBoolean(false);
 
         var dataToStore = JsonNodeFactory.instance.objectNode()
             .put("id", workflow.isEmpty() ? null : workflow)
@@ -225,7 +225,6 @@ public class WorkflowConfig {
         JsonNode schemaNode;
         PhysicalKey schemaEffectivePhysicalKey;
 
-        logger.debug("Loading schema from {}", schemaPhysicalKey);
         try {
             var response = schemaPhysicalKey.open();
             schemaNode = mapper.readTree(response.inputStream);
@@ -252,6 +251,7 @@ public class WorkflowConfig {
         JsonSchemaOptions options = new JsonSchemaOptions()
             .setBaseUri("https://quiltdata.com/")  // TODO: remove it; not actually used.
             .setDraft(draft);
+        logger.debug("Creating validator for schema: {}", schema);
         Validator validator = Validator.create(schema, options);
 
         info = new SchemaInfo(validator, schemaEffectivePhysicalKey);
@@ -271,9 +271,7 @@ public class WorkflowConfig {
         logger.debug("Resolving schema URL: {}", schemaUrl);
         try {
             schemaPk = PhysicalKey.fromUri(new URI(schemaUrl));
-        } catch (IllegalArgumentException e) {
-            throw new ConfigurationException("Couldn't parse URL: " + schemaUrl, e);
-        } catch (URISyntaxException e) {
+        } catch (IllegalArgumentException | URISyntaxException e) {
             throw new ConfigurationException("Couldn't parse URL: " + schemaUrl, e);
         }
 

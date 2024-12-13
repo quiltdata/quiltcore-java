@@ -20,9 +20,9 @@ public class S3ClientStore {
     private static final Logger logger = LoggerFactory.getLogger(S3ClientStore.class);
     private static final S3Client LOCATION_CLIENT = createClient(Region.US_EAST_1);
 
-    private static Map<String, Region> regionMap = Collections.synchronizedMap(new HashMap<>());
-    private static Map<Region, S3AsyncClient> asyncClientMap = Collections.synchronizedMap(new HashMap<>());
-    private static Map<Region, S3Client> clientMap = Collections.synchronizedMap(new HashMap<>());
+    private static final Map<String, Region> regionMap = Collections.synchronizedMap(new HashMap<>());
+    private static final Map<Region, S3AsyncClient> asyncClientMap = Collections.synchronizedMap(new HashMap<>());
+    private static final Map<Region, S3Client> clientMap = Collections.synchronizedMap(new HashMap<>());
 
     /**
      * Retrieves an asynchronous S3 client for the specified bucket.
