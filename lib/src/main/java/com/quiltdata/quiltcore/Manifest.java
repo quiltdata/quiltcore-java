@@ -225,10 +225,8 @@ public class Manifest {
      */
     public static Manifest BuildFromPaths(Map<String, Path> paths, Object user_meta, Map<String, ObjectNode> object_meta) {
         Manifest.Builder b = Manifest.builder();
-        if (user_meta != null) {
-            ObjectNode packageMeta = FormatUserMeta(user_meta);
-            b.setMetadata(packageMeta);
-        }
+        ObjectNode packageMeta = FormatUserMeta(user_meta);
+        b.setMetadata(packageMeta);
         for (Map.Entry<String, Path> e : paths.entrySet()) {
             String key = e.getKey();
             Path p = e.getValue();
@@ -251,8 +249,7 @@ public class Manifest {
                     .forEach(f -> {
                         String logicalKey = dir.relativize(f).toString();
                         if (regex == null || logicalKey.matches(regex)) {
-                            String withoutExtension = logicalKey.replaceFirst("\\.[^.]+$", "");
-                            map.put(withoutExtension, f); // Add the entry to the map
+                            map.put(logicalKey, f); // Add the entry to the map
                         }
                     });
         } catch (IOException e) {

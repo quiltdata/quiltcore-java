@@ -82,7 +82,7 @@ public class RegistryTest {
 
         String topHash = m2.calculateTopHash();
 
-        assertEquals("e329b376d98083054be18881f3471fff7957acdfca8b02c54946f082dc56b572", topHash);
+        assertEquals("71cba8513adfbe7dc4e4b4e03d9e71ba36c3f10745cc4f54949028c2339a35e2", topHash);
     }
 
     @Test
