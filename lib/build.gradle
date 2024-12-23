@@ -21,16 +21,16 @@ repositories {
 
 dependencies {
     // AWS SDK
-    implementation 'software.amazon.awssdk:s3:2.27.24'
-    implementation 'software.amazon.awssdk:s3-transfer-manager:2.27.24'
-    implementation 'software.amazon.awssdk.crt:aws-crt:0.30.9'
+    implementation 'software.amazon.awssdk:s3:2.29.40'
+    implementation 'software.amazon.awssdk:s3-transfer-manager:2.29.40'
+    implementation 'software.amazon.awssdk.crt:aws-crt:0.33.7'
 
     // JSON and YAML parsing.
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.18.2'
     implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.18.2'
 
     // JSON Schema validator.
-    implementation 'io.vertx:vertx-json-schema:4.5.11'
+    implementation 'io.vertx:vertx-json-schema:5.0.0.CR3'
 
     // Workarounds for Java's checked exceptions.
     implementation 'com.pivovarit:throwing-function:1.6.1'
@@ -39,7 +39,7 @@ dependencies {
     testImplementation('org.junit.jupiter:junit-jupiter:5.11.4')
 
     // Add Log4j dependency
-    implementation 'org.apache.logging.log4j:log4j-core:3.0.0-beta2'
+    implementation 'org.apache.logging.log4j:log4j-core:3.0.0-beta3'
     implementation 'org.apache.logging.log4j:log4j-api:3.0.0-beta2'
     implementation 'org.apache.logging.log4j:log4j-slf4j-impl:3.0.0-beta2'
 }
