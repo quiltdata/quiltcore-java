@@ -1,6 +1,10 @@
 # CHANGELOG.md
 
-## [0.1.6] - UNRELEASED
+## [0.1.7] - 2024-12-23
+
+- Update dependencies
+
+## [0.1.6] - 2024-12-12
 
 - Fix failing CI tests
 - Add convenience methods:
