@@ -2,7 +2,9 @@
 
 ## [0.1.7] - 2024-12-23
 
-- Update dependencies
+- Update gradle and dependencies
+- Fix test failures
+- Fix CHANGELOG
 
 ## [0.1.6] - 2024-12-12
 
