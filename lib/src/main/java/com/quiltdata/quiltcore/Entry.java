@@ -33,27 +33,44 @@ public class Entry {
      * Enumerates the types of hash algorithms supported by Quilt.
      */
     public enum HashType {
-        /**
-         * The SHA-256 hash algorithm.
-         */
-        SHA256,
-        SHA2_256_Chunked;
 
         /**
-         * Returns the HashType corresponding to the given name.
-         * 
-         * @param name the name of the hash type
+         * The chunked SHA-256 hash algorithm ("sha2-256-chunked").
+         */
+        SHA256_CHUNKED,
+
+        /**
+         * AWS native CRC64 for NVMe ("CRC64NVME").
+         */
+        CRC64NVME;
+
+        /**
+         * Returns the HashType corresponding to the given name or string value.
+         * Accepts:
+         *   - "SHA256" (legacy)
+         *   - "sha2-256-chunked" (for SHA256_CHUNKED)
+         *   - "SHA2_256_Chunked" (legacy Java name)
+         *   - "CRC64NVME" (AWS native)
+         *   - Case-insensitive
+         *
+         * @param name the name or string value of the hash type
          * @return the corresponding HashType
          * @throws IllegalArgumentException if the name does not correspond to any HashType
          */
         public static HashType enumFor(String name) {
-            String nameWithoutHyphens = name.replace("-", "_");
-            for (HashType type : HashType.values()) {
-                if (type.name().equalsIgnoreCase(nameWithoutHyphens)) {
-                    return type;
-                }
+            if (name == null) {
+                throw new IllegalArgumentException("HashType name cannot be null");
             }
-            throw new IllegalArgumentException("No enum constant " + HashType.class.getCanonicalName() + "." + name);
+            switch (name.toLowerCase()) {
+                case "sha2-256-chunked":
+                case "sha256_chunked":
+                case "sha256-chunked":
+                    return SHA256_CHUNKED;
+                case "crc64nvme":
+                    return CRC64NVME;
+                default:
+                    throw new IllegalArgumentException("No enum constant " + HashType.class.getCanonicalName() + "." + name);
+            }
         }
     }
 
